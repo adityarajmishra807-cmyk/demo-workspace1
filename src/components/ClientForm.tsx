@@ -118,7 +118,7 @@ export default function ClientForm({ initialData, submitLabel, onSubmit, onCance
 
     <div className="rounded-2xl border border-white/10 p-6 space-y-5"><h3 className="text-sm font-semibold uppercase tracking-wider text-white/80">Design</h3>
       <div className="grid sm:grid-cols-2 gap-5"><Field label="Template"><select className={inputClass} value={form.template} onChange={(e) => update('template', e.target.value as TemplateId)}>{templateOptions.map((t) => <option key={t.value} value={t.value} className="bg-[#0a0a0f]">{t.label}</option>)}</select></Field>
-      <Field label="Font Style"><select className={inputClass} value={form.fontStyle} onChange={(e) => update('fontStyle', e.target.value as FontStyle)}>{fontOptions.map((f) => <option key={f.value} value={f.value} className="bg-[#0a0a0f]">{f.label}</option>)}</Field></div>
+      <Field label="Font Style"><select className={inputClass} value={form.fontStyle} onChange={(e) => update('fontStyle', e.target.value as FontStyle)}>{fontOptions.map((f) => <option key={f.value} value={f.value} className="bg-[#0a0a0f]">{f.label}</option>)}</select></Field></div>
       <div className="grid sm:grid-cols-3 gap-5"><Field label="Primary"><input className={inputClass} value={form.brandColors.primary} onChange={(e) => update('brandColors', { ...form.brandColors, primary: e.target.value })} /></Field><Field label="Secondary"><input className={inputClass} value={form.brandColors.secondary} onChange={(e) => update('brandColors', { ...form.brandColors, secondary: e.target.value })} /></Field><Field label="Accent"><input className={inputClass} value={form.brandColors.accent} onChange={(e) => update('brandColors', { ...form.brandColors, accent: e.target.value })} /></Field></div>
     </div>
 
