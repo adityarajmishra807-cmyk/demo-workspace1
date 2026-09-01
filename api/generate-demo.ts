@@ -16,8 +16,9 @@ const responseSchema = {
     template: { type: 'string', enum: [...allowedTemplates] }, fontStyle: { type: 'string', enum: [...allowedFonts] },
     brandColors: { type: 'object', properties: { primary: { type: 'string' }, secondary: { type: 'string' }, accent: { type: 'string' } }, required: ['primary', 'secondary', 'accent'] },
     ctaText: { type: 'string' },
+    visualSearchQuery: { type: 'string' },
   },
-  required: ['businessName','industry','location','description','services','phone','email','whatsapp','instagram','website','tagline','headline','about','contactName','heroImage','galleryImages','template','fontStyle','brandColors','ctaText'],
+  required: ['businessName','industry','location','description','services','phone','email','whatsapp','instagram','website','tagline','headline','about','contactName','heroImage','galleryImages','template','fontStyle','brandColors','ctaText','visualSearchQuery'],
 };
 
 function cleanString(value: unknown): string { return typeof value === 'string' ? value.trim() : ''; }
@@ -35,7 +36,42 @@ function normalizeResult(value: unknown) {
     heroImage: '', galleryImages: '', template, fontStyle,
     brandColors: { primary: cleanString(colors.primary) || '#1a1a2e', secondary: cleanString(colors.secondary) || '#16213e', accent: cleanString(colors.accent) || '#c9a227' },
     ctaText: cleanString(raw.ctaText) || 'Get in Touch',
+    visualSearchQuery: cleanString(raw.visualSearchQuery),
   };
+}
+
+async function fetchPexelsImages(query: string) {
+  const apiKey = process.env.PEXELS_API_KEY;
+  if (!apiKey || !query) return { heroImage: '', galleryImages: '', used: false };
+
+  try {
+    const url = new URL('https://api.pexels.com/v1/search');
+    url.searchParams.set('query', query);
+    url.searchParams.set('orientation', 'landscape');
+    url.searchParams.set('per_page', '6');
+    const response = await fetch(url.toString(), {
+      headers: { Authorization: apiKey },
+    });
+    if (!response.ok) {
+      console.error('Pexels API error:', await response.text());
+      return { heroImage: '', galleryImages: '', used: false };
+    }
+
+    const data = await response.json();
+    const photos = Array.isArray(data?.photos) ? data.photos : [];
+    const urls = photos
+      .map((photo: any) => photo?.src?.landscape || photo?.src?.large2x || photo?.src?.large)
+      .filter((url: unknown): url is string => typeof url === 'string' && url.startsWith('https://images.pexels.com/'));
+
+    return {
+      heroImage: urls[0] || '',
+      galleryImages: urls.slice(1, 6).join('\n'),
+      used: urls.length > 0,
+    };
+  } catch (error) {
+    console.error('Pexels image search failed:', error);
+    return { heroImage: '', galleryImages: '', used: false };
+  }
 }
 
 export default async function handler(req: any, res: any) {
@@ -46,7 +82,7 @@ export default async function handler(req: any, res: any) {
   const brief = cleanString(body.brief);
   if (!brief) return res.status(400).json({ error: 'Enter the business information first.' });
 
-  const prompt = `You are the content strategist for Horizon Works, a web design agency. Turn the following raw business information into a polished website-ready profile. The information may be messy notes. Extract supported facts and improve wording without inventing facts.\n\nRAW BUSINESS INFORMATION:\n${brief}\n\nRules: Use only facts supported by the input. Never invent phone numbers, emails, WhatsApp numbers, addresses, contact names, image URLs, awards, clients, statistics, reviews, prices, certifications, or other factual claims. Return empty strings for missing facts. Do not browse or claim to have visited any URL. Do not generate image URLs. Write concise premium website copy. Services must be one per line and supported by the input. Choose the best template from luxury, photography, local-service, restaurant, professional and the best font from serif, sans, modern, editorial. Brand colors may be design choices. Return only structured data.`;
+  const prompt = `You are the content strategist for Horizon Works, a web design agency. Turn the following raw business information into a polished website-ready profile. The information may be messy notes. Extract supported facts and improve wording without inventing facts.\n\nRAW BUSINESS INFORMATION:\n${brief}\n\nRules: Use only facts supported by the input. Never invent phone numbers, emails, WhatsApp numbers, addresses, contact names, image URLs, awards, clients, statistics, reviews, prices, certifications, or other factual claims. Return empty strings for missing facts. Do not browse or claim to have visited any URL. Do not generate image URLs. Write concise premium website copy. Services must be one per line and supported by the input. Choose the best template from luxury, photography, local-service, restaurant, professional and the best font from serif, sans, modern, editorial. Brand colors may be design choices. Also create a short visualSearchQuery containing the business type, visual subject, location if useful, and aesthetic direction. It will be used only to search a stock-photo library. Do not include a business name unless it is visually meaningful. Return only structured data.`;
 
   try {
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent', {
@@ -72,7 +108,20 @@ export default async function handler(req: any, res: any) {
     const data = JSON.parse(responseText);
     const text = data?.candidates?.[0]?.content?.parts?.find((part: any) => typeof part?.text === 'string')?.text;
     if (!text) return res.status(502).json({ error: 'Gemini returned an empty response. Please try again.' });
-    return res.status(200).json({ data: normalizeResult(JSON.parse(text)) });
+
+    const generated = normalizeResult(JSON.parse(text));
+    const images = await fetchPexelsImages(generated.visualSearchQuery || `${generated.industry} ${generated.location}`);
+
+    return res.status(200).json({
+      data: {
+        ...generated,
+        heroImage: images.heroImage,
+        galleryImages: images.galleryImages,
+      },
+      media: {
+        source: images.used ? 'pexels' : undefined,
+      },
+    });
   } catch (error) {
     console.error('Demo generation error:', error);
     return res.status(500).json({ error: 'Could not generate demo content right now.' });
