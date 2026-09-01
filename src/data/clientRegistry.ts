@@ -8,7 +8,7 @@ function loadFromStorage(): ClientConfig[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    const parsed = JSON.parse(raw);
+    const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
     return parsed as ClientConfig[];
   } catch {
@@ -17,10 +17,17 @@ function loadFromStorage(): ClientConfig[] {
 }
 
 function saveToStorage(clients: ClientConfig[]): void {
+  const serialized = JSON.stringify(clients);
+
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
-  } catch {
-    // storage might be full or unavailable — fail silently
+    localStorage.setItem(STORAGE_KEY, serialized);
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved !== serialized) {
+      throw new Error('Browser storage did not persist the client data.');
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Browser storage is unavailable.';
+    throw new Error(`Could not save client data. ${message}`);
   }
 }
 
@@ -58,21 +65,42 @@ export function slugExists(slug: string, excludeId?: string): boolean {
 
 export function addClient(client: ClientConfig): void {
   const stored = loadFromStorage();
-  stored.push(client);
-  saveToStorage(stored);
+  if (stored.some((c) => c.id === client.id)) {
+    throw new Error('A client with this ID already exists.');
+  }
+
+  const next = [...stored, client];
+  saveToStorage(next);
+
+  if (!getClientById(client.id)) {
+    throw new Error('Client was not found after saving.');
+  }
 }
 
 export function updateClient(client: ClientConfig): void {
   const stored = loadFromStorage();
   const idx = stored.findIndex((c) => c.id === client.id);
-  if (idx !== -1) {
-    stored[idx] = client;
-    saveToStorage(stored);
+  if (idx === -1) {
+    throw new Error('Client could not be found for update.');
+  }
+
+  const next = [...stored];
+  next[idx] = client;
+  saveToStorage(next);
+
+  const saved = getClientById(client.id);
+  if (!saved || saved.slug !== client.slug) {
+    throw new Error('Client changes were not persisted correctly.');
   }
 }
 
 export function deleteClient(id: string): void {
   if (isProtectedClient(id)) return;
-  const stored = loadFromStorage().filter((c) => c.id !== id);
-  saveToStorage(stored);
+  const stored = loadFromStorage();
+  const next = stored.filter((c) => c.id !== id);
+  saveToStorage(next);
+
+  if (getClientById(id)) {
+    throw new Error('Client could not be deleted.');
+  }
 }
