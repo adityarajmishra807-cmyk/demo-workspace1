@@ -3,29 +3,39 @@ import { ArrowLeft, Check, Copy, ExternalLink, Info } from 'lucide-react';
 import ClientForm, { emptyFormData, type ClientFormData } from '@/components/ClientForm';
 import { formToClientConfig } from '@/utils/clientBuilder';
 import { addClient, slugExists } from '@/data/clientRegistry';
+import { buildShareUrl } from '@/utils/demoUrl';
 
 type View = 'form' | 'success';
 
 export default function CreateDemo({ navigate }: { navigate: (to: string) => void }) {
   const [view, setView] = useState<View>('form');
   const [createdSlug, setCreatedSlug] = useState('');
+  const [demoUrl, setDemoUrl] = useState('');
   const [copied, setCopied] = useState(false);
-
-  const demoUrl = createdSlug
-    ? `${window.location.origin}/#/${createdSlug}`
-    : '';
+  const [error, setError] = useState('');
 
   const handleSubmit = (data: ClientFormData) => {
-    const config = formToClientConfig(data, slugExists);
-    addClient(config);
-    setCreatedSlug(config.slug);
-    setView('success');
+    setError('');
+
+    try {
+      const config = formToClientConfig(data, slugExists);
+      addClient(config);
+      setCreatedSlug(config.slug);
+      setDemoUrl(buildShareUrl(config));
+      setView('success');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not create the demo. Please try again.');
+    }
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(demoUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(demoUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError('Could not copy the demo URL. Please copy it manually.');
+    }
   };
 
   return (
@@ -47,15 +57,21 @@ export default function CreateDemo({ navigate }: { navigate: (to: string) => voi
           <>
             <h2 className="text-2xl md:text-3xl font-bold mb-2">Create New Demo</h2>
             <p className="text-white/50 text-sm mb-8 max-w-2xl">
-              Fill in the business information below. The demo will be saved locally and available immediately after creation.
+              Fill in the business information below. The demo is saved locally for dashboard management and the share URL contains the demo configuration so it works on any device.
             </p>
 
             <div className="mb-8 rounded-xl border border-sky-400/20 bg-sky-500/5 p-4 flex items-start gap-3">
               <Info size={18} className="text-sky-400 shrink-0 mt-0.5" />
               <p className="text-sm text-sky-200/70">
-                A URL-safe slug is generated from the business name. If a slug already exists, a number is appended automatically.
+                A URL-safe slug is generated from the business name. If a slug already exists, a number is appended automatically. The generated share link is self-contained and does not depend on the recipient having your browser storage.
               </p>
             </div>
+
+            {error && (
+              <div className="mb-6 rounded-xl border border-red-400/20 bg-red-500/5 p-4 text-sm text-red-300">
+                {error}
+              </div>
+            )}
 
             <ClientForm
               initialData={emptyFormData}
@@ -73,11 +89,11 @@ export default function CreateDemo({ navigate }: { navigate: (to: string) => voi
             </div>
             <h2 className="text-2xl md:text-3xl font-bold mb-3">Demo created successfully</h2>
             <p className="text-white/50 text-sm mb-8">
-              Your client demo is now live. Use the URL below to share it.
+              Your client demo is ready. Use this URL to share it with the prospect.
             </p>
 
             <div className="rounded-2xl border border-white/10 bg-white/5 p-6 mb-8">
-              <p className="text-xs uppercase tracking-wider text-white/40 mb-3">Demo URL</p>
+              <p className="text-xs uppercase tracking-wider text-white/40 mb-3">Shareable Demo URL</p>
               <div className="flex items-center gap-3">
                 <code className="flex-1 text-sm text-sky-400 text-left break-all">{demoUrl}</code>
                 <button
@@ -89,6 +105,12 @@ export default function CreateDemo({ navigate }: { navigate: (to: string) => voi
                 </button>
               </div>
             </div>
+
+            {error && (
+              <div className="mb-6 rounded-xl border border-red-400/20 bg-red-500/5 p-4 text-sm text-red-300">
+                {error}
+              </div>
+            )}
 
             <div className="flex items-center justify-center gap-4">
               <button
