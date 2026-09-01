@@ -1,5 +1,6 @@
 import { useRouter } from '@/utils/router';
 import { getClientBySlug } from '@/data/clientRegistry';
+import { decodeClientConfig } from '@/utils/demoUrl';
 import Landing from '@/pages/Landing';
 import Dashboard from '@/pages/Dashboard';
 import CreateDemo from '@/pages/CreateDemo';
@@ -7,14 +8,12 @@ import EditDemo from '@/pages/EditDemo';
 import ClientSite from '@/pages/ClientSite';
 
 function App() {
-  const { segments, navigate } = useRouter();
+  const { segments, query, navigate } = useRouter();
 
-  // Route: /  → Landing
   if (segments.length === 0) {
     return <Landing navigate={navigate} />;
   }
 
-  // Route: /dashboard → Dashboard
   if (segments[0] === 'dashboard') {
     if (segments[1] === 'create') {
       return <CreateDemo navigate={navigate} />;
@@ -25,11 +24,12 @@ function App() {
     return <Dashboard navigate={navigate} />;
   }
 
-  // Route: /:slug → Client demo site
   const slug = segments[0];
-  const client = getClientBySlug(slug);
+  const sharedConfig = query.get('config');
+  const client = sharedConfig ? decodeClientConfig(sharedConfig) : getClientBySlug(slug);
+  const validSharedClient = client && client.slug === slug ? client : undefined;
 
-  if (!client) {
+  if (!validSharedClient) {
     return (
       <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center">
         <div className="text-center">
@@ -48,7 +48,7 @@ function App() {
     );
   }
 
-  return <ClientSite client={client} />;
+  return <ClientSite client={validSharedClient} />;
 }
 
 export default App;
