@@ -1,13 +1,7 @@
 import type { ClientConfig, FontStyle, TemplateId, BrandColors } from '@/types/client';
 
 export function generateSlug(businessName: string): string {
-  return businessName
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
+  return businessName.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
 }
 
 export function generateId(businessName: string): string {
@@ -16,11 +10,7 @@ export function generateId(businessName: string): string {
   return `${base}-${suffix}`;
 }
 
-export function ensureUniqueSlug(
-  slug: string,
-  exists: (slug: string, excludeId?: string) => boolean,
-  excludeId?: string
-): string {
+export function ensureUniqueSlug(slug: string, exists: (slug: string, excludeId?: string) => boolean, excludeId?: string): string {
   if (!exists(slug, excludeId)) return slug;
   let i = 2;
   while (exists(`${slug}-${i}`, excludeId)) i++;
@@ -39,6 +29,11 @@ interface FormToClientInput {
   email: string;
   whatsapp: string;
   instagram: string;
+  website: string;
+  tagline: string;
+  headline: string;
+  about: string;
+  contactName: string;
   heroImage: string;
   galleryImages: string;
   template: TemplateId;
@@ -48,26 +43,16 @@ interface FormToClientInput {
 }
 
 function parseServices(text: string): ClientConfig['services'] {
-  const names = text
-    .split('\n')
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (names.length === 0) return undefined;
-  return names.map((name) => ({ name, description: '' }));
+  const names = text.split('\n').map((s) => s.trim()).filter(Boolean);
+  return names.length ? names.map((name) => ({ name, description: '' })) : undefined;
 }
 
 function parseGalleryImages(text: string): ClientConfig['galleryImages'] {
-  const urls = text
-    .split(/[,\n]/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (urls.length === 0) return undefined;
-  return urls.map((url) => ({ url, alt: 'Gallery image' }));
+  const urls = text.split(/[,\n]/).map((s) => s.trim()).filter(Boolean);
+  return urls.length ? urls.map((url) => ({ url, alt: 'Gallery image' })) : undefined;
 }
 
-function deriveBrandColors(
-  partial: { primary: string; secondary: string; accent: string }
-): BrandColors {
+function deriveBrandColors(partial: { primary: string; secondary: string; accent: string }): BrandColors {
   return {
     primary: partial.primary,
     secondary: partial.secondary,
@@ -79,58 +64,40 @@ function deriveBrandColors(
   };
 }
 
-export function formToClientConfig(
-  form: FormToClientInput,
-  slugChecker: (slug: string, excludeId?: string) => boolean,
-  excludeId?: string
-): ClientConfig {
+export function formToClientConfig(form: FormToClientInput, slugChecker: (slug: string, excludeId?: string) => boolean, excludeId?: string): ClientConfig {
   const id = form.id || generateId(form.businessName);
   const baseSlug = form.slug || generateSlug(form.businessName) || id;
   const slug = ensureUniqueSlug(baseSlug, slugChecker, excludeId ?? form.id);
-
-  const locationParts = form.location
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const locationParts = form.location.split(',').map((s) => s.trim()).filter(Boolean);
+  const description = form.description.trim();
+  const about = form.about.trim() || description;
 
   return {
     id,
     slug,
-    businessName: form.businessName,
-    industry: form.industry || 'General',
-    tagline: form.description || undefined,
-    headline: form.businessName,
-    description: form.description || undefined,
-    location:
-      locationParts.length > 0
-        ? {
-            city: locationParts[0],
-            region: locationParts[1],
-            country: locationParts[2],
-            address: form.location || undefined,
-          }
-        : undefined,
-    about: form.description
-      ? {
-          heading: `About ${form.businessName}`,
-          body: [form.description],
-        }
-      : undefined,
+    businessName: form.businessName.trim(),
+    industry: form.industry.trim() || 'General',
+    tagline: form.tagline.trim() || undefined,
+    headline: form.headline.trim() || form.businessName.trim(),
+    description: description || undefined,
+    location: locationParts.length ? { city: locationParts[0], region: locationParts[1], country: locationParts[2], address: form.location || undefined } : undefined,
+    about: about ? { heading: `About ${form.businessName.trim()}`, body: [about] } : undefined,
     services: parseServices(form.services),
     galleryImages: parseGalleryImages(form.galleryImages),
-    heroImage: form.heroImage || undefined,
+    heroImage: form.heroImage.trim() || undefined,
     features: undefined,
     contact: {
-      phone: form.phone || undefined,
-      email: form.email || undefined,
-      whatsapp: form.whatsapp || undefined,
-      instagram: form.instagram || undefined,
-      website: undefined,
+      contactName: form.contactName.trim() || undefined,
+      phone: form.phone.trim() || undefined,
+      email: form.email.trim() || undefined,
+      whatsapp: form.whatsapp.trim() || undefined,
+      instagram: form.instagram.trim() || undefined,
+      website: form.website.trim() || undefined,
     },
     template: form.template,
     brandColors: deriveBrandColors(form.brandColors),
     fontStyle: form.fontStyle,
-    ctaText: form.ctaText || 'Get in Touch',
+    ctaText: form.ctaText.trim() || 'Get in Touch',
     secondaryCtaText: 'View Services',
   };
 }
