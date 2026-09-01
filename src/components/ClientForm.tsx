@@ -61,16 +61,15 @@ export default function ClientForm({ initialData, submitLabel, onSubmit, onCance
 
   const generateWithGemini = async () => {
     setAiError('');
-    if (!form.businessName.trim()) { setErrors((p) => ({ ...p, businessName: 'Business name is required' })); setAiError('Enter the business name first.'); return; }
+    const brief = form.notes.trim();
+    if (!brief) { setAiError('Paste the business information in the box first.'); return; }
     setAiLoading(true);
     try {
-      const response = await fetch('/api/generate-demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brief: [
-        `Business name: ${form.businessName}`, `Industry: ${form.industry}`, `Location: ${form.location}`,
-        `Website / Instagram: ${form.researchReference}`, `Additional notes: ${form.notes}`,
-      ].filter((x) => !x.endsWith(': ')).join('\n') }) });
+      const response = await fetch('/api/generate-demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brief }) });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload?.error || 'Gemini could not generate the content.');
-      setForm((prev) => ({ ...prev, ...payload.data })); setErrors({});
+      setForm((prev) => ({ ...prev, ...payload.data, notes: prev.notes }));
+      setErrors({});
     } catch (error) { setAiError(error instanceof Error ? error.message : 'Could not generate content. Please try again.'); }
     finally { setAiLoading(false); }
   };
@@ -79,6 +78,7 @@ export default function ClientForm({ initialData, submitLabel, onSubmit, onCance
     const next: Record<string, string> = {};
     if (!form.businessName.trim()) next.businessName = 'Business name is required';
     if (!form.industry.trim()) next.industry = 'Industry is required';
+    if (!form.description.trim()) next.description = 'Description is required';
     setErrors(next); return Object.keys(next).length === 0;
   };
 
@@ -118,7 +118,7 @@ export default function ClientForm({ initialData, submitLabel, onSubmit, onCance
 
     <div className="rounded-2xl border border-white/10 p-6 space-y-5"><h3 className="text-sm font-semibold uppercase tracking-wider text-white/80">Design</h3>
       <div className="grid sm:grid-cols-2 gap-5"><Field label="Template"><select className={inputClass} value={form.template} onChange={(e) => update('template', e.target.value as TemplateId)}>{templateOptions.map((t) => <option key={t.value} value={t.value} className="bg-[#0a0a0f]">{t.label}</option>)}</select></Field>
-      <Field label="Font Style"><select className={inputClass} value={form.fontStyle} onChange={(e) => update('fontStyle', e.target.value as FontStyle)}>{fontOptions.map((f) => <option key={f.value} value={f.value} className="bg-[#0a0a0f]">{f.label}</option>)}</select></Field></div>
+      <Field label="Font Style"><select className={inputClass} value={form.fontStyle} onChange={(e) => update('fontStyle', e.target.value as FontStyle)}>{fontOptions.map((f) => <option key={f.value} value={f.value} className="bg-[#0a0a0f]">{f.label}</option>)}</Field></div>
       <div className="grid sm:grid-cols-3 gap-5"><Field label="Primary"><input className={inputClass} value={form.brandColors.primary} onChange={(e) => update('brandColors', { ...form.brandColors, primary: e.target.value })} /></Field><Field label="Secondary"><input className={inputClass} value={form.brandColors.secondary} onChange={(e) => update('brandColors', { ...form.brandColors, secondary: e.target.value })} /></Field><Field label="Accent"><input className={inputClass} value={form.brandColors.accent} onChange={(e) => update('brandColors', { ...form.brandColors, accent: e.target.value })} /></Field></div>
     </div>
 
