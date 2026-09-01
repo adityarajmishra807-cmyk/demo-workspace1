@@ -13,6 +13,7 @@ export default function EditDemo({
 }) {
   const client = getClientBySlug(slug);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
 
   if (!client) {
     return (
@@ -33,15 +34,27 @@ export default function EditDemo({
   const isProtected = isProtectedClient(client.id);
 
   const handleSubmit = (data: ClientFormData) => {
-    const config = formToClientConfig(data, slugExists, client.id);
-    // Preserve the original id and slug for protected clients
-    if (isProtected) {
-      config.id = client.id;
-      config.slug = client.slug;
+    setError('');
+    setSaved(false);
+
+    try {
+      const config = formToClientConfig(
+        { ...data, id: client.id },
+        slugExists,
+        client.id
+      );
+
+      if (isProtected) {
+        config.id = client.id;
+        config.slug = client.slug;
+      }
+
+      updateClient(config);
+      setSaved(true);
+      setTimeout(() => navigate(`/${config.slug}`), 800);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save the changes. Please try again.');
     }
-    updateClient(config);
-    setSaved(true);
-    setTimeout(() => navigate(`/${config.slug}`), 800);
   };
 
   return (
@@ -63,12 +76,18 @@ export default function EditDemo({
           Edit Demo {isProtected && <span className="text-white/40 text-base font-normal">(Demo Business)</span>}
         </h2>
         <p className="text-white/50 text-sm mb-8 max-w-2xl">
-          Update the configuration for <span className="text-white/80">{client.businessName}</span>. Changes are saved locally.
+          Update the configuration for <span className="text-white/80">{client.businessName}</span>. Changes are saved in this browser.
         </p>
 
         {saved && (
           <div className="mb-6 rounded-xl border border-emerald-400/20 bg-emerald-500/5 p-4 text-sm text-emerald-300">
             Changes saved. Redirecting to demo...
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-400/20 bg-red-500/5 p-4 text-sm text-red-300">
+            {error}
           </div>
         )}
 
