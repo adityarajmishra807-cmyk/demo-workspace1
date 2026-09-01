@@ -18,7 +18,6 @@ const responseSchema = {
     ctaText: { type: 'string' },
   },
   required: ['businessName','industry','location','description','services','phone','email','whatsapp','instagram','website','tagline','headline','about','contactName','heroImage','galleryImages','template','fontStyle','brandColors','ctaText'],
-  additionalProperties: false,
 };
 
 function cleanString(value: unknown): string { return typeof value === 'string' ? value.trim() : ''; }
