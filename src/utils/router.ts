@@ -3,13 +3,15 @@ import { useState, useEffect } from 'react';
 export interface RouteState {
   path: string;
   segments: string[];
+  query: URLSearchParams;
 }
 
 function parsePath(): RouteState {
-  const hash = window.location.hash.replace(/^#/, '');
-  const path = hash || '/';
+  const hash = window.location.hash.replace(/^#/, '') || '/';
+  const [pathPart, queryPart = ''] = hash.split('?');
+  const path = pathPart || '/';
   const segments = path.split('/').filter(Boolean);
-  return { path, segments };
+  return { path, segments, query: new URLSearchParams(queryPart) };
 }
 
 export function useRouter(): RouteState & { navigate: (to: string) => void } {
