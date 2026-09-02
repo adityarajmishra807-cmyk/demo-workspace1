@@ -14,7 +14,7 @@ export default function CTA({ client }: { client: ClientConfig }) {
             <p className="text-xs md:text-sm uppercase tracking-[0.35em] mb-6" style={{ color: 'var(--brand-accent)' }}>Begin the conversation</p>
             <h2 className="text-4xl md:text-6xl lg:text-7xl font-medium leading-[1.02] mb-7" style={{ color: 'var(--brand-text)' }}>{client.headline || `Ready to work with ${client.businessName}?`}</h2>
             <p className="text-lg md:text-xl leading-8 max-w-2xl mb-10" style={{ color: 'var(--brand-muted)' }}>{client.tagline || 'Get in touch today and let\'s discuss how we can help.'}</p>
-            <a href="#contact" className="group inline-flex items-center gap-3 px-7 py-4 rounded-full text-base font-semibold transition-all duration-300 hover:gap-5" style={{ background: 'var(--brand-accent)', color: 'var(--brand-background)' }}>
+            <a href="#contact" className="group inline-flex items-center gap-3 px-7 py-4 rounded-full text-base font-semibold transition-all duration-300 hover:gap-5" style={{ background: 'var(--brand-accent)', color: 'var(--brand-on-accent)' }}>
               {client.ctaText}<ArrowUpRight size={18} className="transition-transform duration-300 group-hover:rotate-45" />
             </a>
           </div>
