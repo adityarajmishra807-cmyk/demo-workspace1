@@ -17,6 +17,55 @@ export function ensureUniqueSlug(slug: string, exists: (slug: string, excludeId?
   return `${slug}-${i}`;
 }
 
+function hexToRgb(hex: string): [number, number, number] | null {
+  const clean = hex.trim().replace('#', '');
+  const normalized = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean;
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return null;
+  return [parseInt(normalized.slice(0, 2), 16), parseInt(normalized.slice(2, 4), 16), parseInt(normalized.slice(4, 6), 16)];
+}
+
+function relativeLuminance(hex: string): number {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return 0.5;
+  const channels = rgb.map((value) => {
+    const s = value / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+}
+
+function contrastRatio(a: string, b: string): number {
+  const l1 = relativeLuminance(a);
+  const l2 = relativeLuminance(b);
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+}
+
+function bestContrastingColor(backgrounds: string[], candidates: string[]): string {
+  return candidates.reduce((best, candidate) => {
+    const bestScore = Math.min(...backgrounds.map((background) => contrastRatio(best, background)));
+    const candidateScore = Math.min(...backgrounds.map((background) => contrastRatio(candidate, background)));
+    return candidateScore > bestScore ? candidate : best;
+  });
+}
+
+function safeHex(value: string, fallback: string): string {
+  return hexToRgb(value) ? (value.startsWith('#') ? value : `#${value}`) : fallback;
+}
+
+function deriveBrandColors(partial: { primary: string; secondary: string; accent: string }): BrandColors {
+  const primary = safeHex(partial.primary, '#1a1a2e');
+  const secondary = safeHex(partial.secondary, '#16213e');
+  const accent = safeHex(partial.accent, '#c9a227');
+  const surfaces = [primary, secondary];
+
+  // Generated palettes may be light or dark. Choose typography from actual luminance
+  // instead of locking every generated site to white text and gray muted text.
+  const text = bestContrastingColor(surfaces, ['#ffffff', '#111111']);
+  const muted = bestContrastingColor(surfaces, ['#4b5563', '#374151', '#6b7280', '#d1d5db', '#e5e7eb', '#f3f4f6']);
+
+  return { primary, secondary, accent, background: primary, surface: secondary, text, muted };
+}
+
 interface FormToClientInput {
   id?: string;
   slug?: string;
@@ -50,18 +99,6 @@ function parseServices(text: string): ClientConfig['services'] {
 function parseGalleryImages(text: string): ClientConfig['galleryImages'] {
   const urls = text.split(/[,\n]/).map((s) => s.trim()).filter(Boolean);
   return urls.length ? urls.map((url) => ({ url, alt: 'Gallery image' })) : undefined;
-}
-
-function deriveBrandColors(partial: { primary: string; secondary: string; accent: string }): BrandColors {
-  return {
-    primary: partial.primary,
-    secondary: partial.secondary,
-    accent: partial.accent,
-    background: partial.primary,
-    surface: partial.secondary,
-    text: '#f5f5f5',
-    muted: '#a0a0b0',
-  };
 }
 
 export function formToClientConfig(form: FormToClientInput, slugChecker: (slug: string, excludeId?: string) => boolean, excludeId?: string): ClientConfig {
