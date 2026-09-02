@@ -7,13 +7,7 @@ const DARK_MUTED = '#4b5563';
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const clean = hex.replace('#', '');
-  const full =
-    clean.length === 3
-      ? clean
-          .split('')
-          .map((c) => c + c)
-          .join('')
-      : clean;
+  const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean;
   const r = parseInt(full.slice(0, 2), 16);
   const g = parseInt(full.slice(2, 4), 16);
   const b = parseInt(full.slice(4, 6), 16);
@@ -64,14 +58,15 @@ function withAlpha(hex: string, alpha: number): string {
 export function applyBrandTheme(colors: BrandColors): void {
   const root = document.documentElement;
 
-  // Gemini supplies the three brand colors, while text/muted are derived here.
-  // This is the final guard against light text being rendered on a light theme
-  // (or dark text on a dark theme), including previously generated demos.
+  // Gemini supplies the three brand colors. Derive the semantic surface and
+  // typography tokens from them so light palettes never inherit white text and
+  // dark palettes never inherit low-contrast dark text.
   const primary = normalizeHex(colors.primary, '#1a1a2e');
   const secondary = normalizeHex(colors.secondary, '#16213e');
   const accent = normalizeHex(colors.accent, '#c9a227');
   const readableText = bestReadableColor([primary, secondary], LIGHT_TEXT, DARK_TEXT);
   const readableMuted = bestReadableColor([primary, secondary], LIGHT_MUTED, DARK_MUTED);
+  const onAccent = contrastRatio('#ffffff', accent) >= contrastRatio('#111111', accent) ? '#ffffff' : '#111111';
 
   root.style.setProperty('--brand-primary', primary);
   root.style.setProperty('--brand-secondary', secondary);
@@ -82,11 +77,13 @@ export function applyBrandTheme(colors: BrandColors): void {
   root.style.setProperty('--brand-muted', readableMuted);
   root.style.setProperty('--brand-primary-rgb', rgbString(primary));
   root.style.setProperty('--brand-secondary-rgb', rgbString(secondary));
+  root.style.setProperty('--brand-background-rgb', rgbString(primary));
   root.style.setProperty('--brand-accent-rgb', rgbString(accent));
   root.style.setProperty('--brand-text-rgb', rgbString(readableText));
   root.style.setProperty('--brand-muted-rgb', rgbString(readableMuted));
   root.style.setProperty('--brand-accent-soft', withAlpha(accent, 0.15));
   root.style.setProperty('--brand-accent-border', withAlpha(accent, 0.4));
+  root.style.setProperty('--brand-on-accent', onAccent);
 }
 
 export function applyFontStyle(font: FontStyle): void {
@@ -111,11 +108,13 @@ export function resetTheme(): void {
     '--brand-muted',
     '--brand-primary-rgb',
     '--brand-secondary-rgb',
+    '--brand-background-rgb',
     '--brand-accent-rgb',
     '--brand-text-rgb',
     '--brand-muted-rgb',
     '--brand-accent-soft',
     '--brand-accent-border',
+    '--brand-on-accent',
   ];
   props.forEach((p) => root.style.removeProperty(p));
   root.removeAttribute('data-font');
