@@ -65,20 +65,12 @@ export default function Navbar({ client }: { client: ClientConfig }) {
             : 'bg-transparent'
         )}
       >
-        <nav
-          className={cn(
-            'container-base flex items-center justify-between transition-all duration-500',
-            scrolled ? 'py-3 md:py-3.5' : 'py-5 md:py-6'
-          )}
-        >
+        <nav className={cn('container-base flex items-center justify-between transition-all duration-500', scrolled ? 'py-3 md:py-3.5' : 'py-5 md:py-6')}>
           <a href="#" className="flex items-center gap-3 group">
             {client.logo ? (
               <img src={client.logo} alt={client.businessName} className={cn('w-auto transition-all duration-500', scrolled ? 'h-8' : 'h-9')} />
             ) : (
-              <span
-                className={cn('font-bold tracking-tight transition-all duration-500', scrolled ? 'text-lg md:text-xl' : 'text-xl md:text-2xl')}
-                style={{ color: 'var(--brand-text)' }}
-              >
+              <span className={cn('font-bold tracking-tight transition-all duration-500', scrolled ? 'text-lg md:text-xl' : 'text-xl md:text-2xl')} style={{ color: 'var(--brand-text)' }}>
                 {client.businessName}
               </span>
             )}
@@ -97,13 +89,7 @@ export default function Navbar({ client }: { client: ClientConfig }) {
                   onMouseLeave={(e) => (e.currentTarget.style.color = active ? 'var(--brand-text)' : 'var(--brand-muted)')}
                 >
                   {link.label}
-                  <span
-                    className="absolute -bottom-2 left-1/2 h-px -translate-x-1/2 transition-all duration-300"
-                    style={{
-                      width: active ? '100%' : '0%',
-                      background: 'var(--brand-accent)',
-                    }}
-                  />
+                  <span className="absolute -bottom-2 left-1/2 h-px -translate-x-1/2 transition-all duration-300" style={{ width: active ? '100%' : '0%', background: 'var(--brand-accent)' }} />
                 </a>
               );
             })}
@@ -113,7 +99,7 @@ export default function Navbar({ client }: { client: ClientConfig }) {
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg"
                 style={{
                   background: scrolled ? 'var(--brand-accent)' : 'var(--brand-text)',
-                  color: scrolled ? 'var(--brand-background)' : 'var(--brand-background)',
+                  color: scrolled ? 'var(--brand-on-accent)' : 'var(--brand-background)',
                 }}
               >
                 {client.ctaText}
@@ -121,52 +107,24 @@ export default function Navbar({ client }: { client: ClientConfig }) {
             )}
           </div>
 
-          <button
-            className="md:hidden p-2 rounded-full transition-colors hover:bg-white/10"
-            onClick={() => setOpen(!open)}
-            aria-label="Toggle menu"
-            style={{ color: 'var(--brand-text)' }}
-          >
+          <button className="md:hidden p-2 rounded-full transition-colors hover:bg-white/10" onClick={() => setOpen(!open)} aria-label="Toggle menu" style={{ color: 'var(--brand-text)' }}>
             {open ? <X size={22} /> : <Menu size={22} />}
           </button>
         </nav>
 
-        <div
-          className="absolute left-0 right-0 bottom-0 h-px origin-left transition-transform duration-150"
-          style={{ background: 'var(--brand-accent)', transform: `scaleX(${Math.min(window.scrollY / Math.max(document.documentElement.scrollHeight - window.innerHeight, 1), 1)})` }}
-        />
+        <div className="absolute left-0 right-0 bottom-0 h-px origin-left transition-transform duration-150" style={{ background: 'var(--brand-accent)', transform: `scaleX(${Math.min(window.scrollY / Math.max(document.documentElement.scrollHeight - window.innerHeight, 1), 1)})` }} />
       </header>
 
       {open && (
-        <div
-          className="md:hidden fixed inset-x-0 top-[64px] z-40 border-t backdrop-blur-2xl shadow-2xl"
-          style={{
-            background: 'rgba(var(--brand-background-rgb, 10 10 15), 0.94)',
-            borderColor: 'rgba(var(--brand-muted-rgb), 0.12)',
-          }}
-        >
+        <div className="md:hidden fixed inset-x-0 top-[64px] z-40 border-t backdrop-blur-2xl shadow-2xl" style={{ background: 'rgba(var(--brand-background-rgb, 10 10 15), 0.94)', borderColor: 'rgba(var(--brand-muted-rgb), 0.12)' }}>
           <div className="container-base flex flex-col gap-1 py-4">
             {filtered.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-                className="py-3 px-2 text-base font-medium transition-colors"
-                style={{ color: activeSection === link.href ? 'var(--brand-accent)' : 'var(--brand-text)' }}
-              >
+              <a key={link.href} href={link.href} onClick={() => setOpen(false)} className="py-3 px-2 text-base font-medium transition-colors" style={{ color: activeSection === link.href ? 'var(--brand-accent)' : 'var(--brand-text)' }}>
                 {link.label}
               </a>
             ))}
             {client.ctaText && (
-              <a
-                href="#contact"
-                onClick={() => setOpen(false)}
-                className="mt-2 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-base font-semibold"
-                style={{
-                  background: 'var(--brand-accent)',
-                  color: 'var(--brand-background)',
-                }}
-              >
+              <a href="#contact" onClick={() => setOpen(false)} className="mt-2 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-base font-semibold" style={{ background: 'var(--brand-accent)', color: 'var(--brand-on-accent)' }}>
                 {client.ctaText}
               </a>
             )}
