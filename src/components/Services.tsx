@@ -25,14 +25,14 @@ export default function Services({ client }: { client: ClientConfig }) {
 
         <div className="border-t" style={{ borderColor: 'rgba(var(--brand-muted-rgb), 0.18)' }}>
           {client.services.map((service, i) => (
-            <article key={i} className="group relative grid md:grid-cols-[100px_1fr_56px] gap-6 md:gap-10 items-center py-8 md:py-10 border-b transition-all duration-500 hover:px-4" style={{ borderColor: 'rgba(var(--brand-muted-rgb), 0.18)' }}>
-              <span className="text-sm tracking-[0.2em]" style={{ color: 'var(--brand-accent)' }}>{String(i + 1).padStart(2, '0')}</span>
-              <div>
-                <h3 className="text-2xl md:text-3xl lg:text-4xl font-medium mb-3" style={{ color: 'var(--brand-text)' }}>{service.name}</h3>
-                <p className="max-w-2xl text-base md:text-lg leading-7" style={{ color: 'var(--brand-muted)' }}>{service.description}</p>
+            <article key={i} className="group relative grid grid-cols-[40px_minmax(0,1fr)_48px] md:grid-cols-[100px_1fr_56px] gap-4 md:gap-10 items-center py-7 md:py-10 border-b transition-all duration-500 md:hover:px-4" style={{ borderColor: 'rgba(var(--brand-muted-rgb), 0.18)' }}>
+              <span className="text-xs md:text-sm tracking-[0.2em]" style={{ color: 'var(--brand-accent)' }}>{String(i + 1).padStart(2, '0')}</span>
+              <div className="min-w-0">
+                <h3 className="text-xl md:text-3xl lg:text-4xl font-medium mb-2 md:mb-3" style={{ color: 'var(--brand-text)' }}>{service.name}</h3>
+                <p className="max-w-2xl text-sm md:text-lg leading-6 md:leading-7" style={{ color: 'var(--brand-muted)' }}>{service.description}</p>
               </div>
-              <div className="w-12 h-12 rounded-full border flex items-center justify-center transition-all duration-500 group-hover:rotate-45 group-hover:scale-110" style={{ borderColor: 'var(--brand-accent-border)', color: 'var(--brand-accent)' }}>
-                <ArrowUpRight size={20} />
+              <div className="w-11 h-11 md:w-12 md:h-12 rounded-full border flex items-center justify-center transition-all duration-500 md:group-hover:rotate-45 md:group-hover:scale-110" style={{ borderColor: 'var(--brand-accent-border)', color: 'var(--brand-accent)' }}>
+                <ArrowUpRight size={18} />
               </div>
             </article>
           ))}
