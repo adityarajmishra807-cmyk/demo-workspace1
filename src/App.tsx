@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from '@/utils/router';
-import { getClientBySlug } from '@/data/clientRegistry';
-import { decodeClientConfig, getLegacyConfigFromSearch } from '@/utils/demoUrl';
+import { fetchRemoteClient, getClientBySlug } from '@/data/clientRegistry';
 import type { ClientConfig } from '@/types/client';
 import Landing from '@/pages/Landing';
 import Dashboard from '@/pages/Dashboard';
@@ -19,34 +18,18 @@ function getDemoSubdomainSlug(): string | undefined {
 }
 
 function DemoSubdomainSite({ slug }: { slug: string }) {
-  const [client, setClient] = useState<ClientConfig | undefined>(() => getLegacyConfigFromSearch(window.location.search));
-  const [loading, setLoading] = useState(!client);
+  const [client, setClient] = useState<ClientConfig | undefined>();
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const legacy = getLegacyConfigFromSearch(window.location.search);
-    if (legacy?.slug === slug) {
-      setClient(legacy);
-      setLoading(false);
-      const cleanUrl = `${window.location.origin}/`;
-      window.history.replaceState({}, document.title, cleanUrl);
-      return;
-    }
-
     let cancelled = false;
     setLoading(true);
-    fetch(`/api/demo-store?action=get&slug=${encodeURIComponent(slug)}`, { cache: 'no-store' })
-      .then(async (response) => {
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload?.error || 'Demo could not be loaded.');
-        return payload;
-      })
-      .then((payload) => {
+    fetchRemoteClient(slug)
+      .then((remote) => {
         if (cancelled) return;
-        const remote = payload?.data as ClientConfig | undefined;
-        if (!remote || remote.slug !== slug) throw new Error('Stored demo data is invalid.');
+        if (!remote || remote.slug !== slug) throw new Error('Demo not found.');
         setClient(remote);
-        setError('');
       })
       .catch((err) => {
         if (cancelled) return;
@@ -79,17 +62,12 @@ function DemoSubdomainSite({ slug }: { slug: string }) {
 }
 
 function App() {
-  const { segments, query, navigate } = useRouter();
+  const { segments, navigate } = useRouter();
   const demoSubdomainSlug = getDemoSubdomainSlug();
 
-  // Public demo subdomains are a client-only surface. They never render dashboard routes.
-  if (demoSubdomainSlug) {
-    return <DemoSubdomainSite slug={demoSubdomainSlug} />;
-  }
+  if (demoSubdomainSlug) return <DemoSubdomainSite slug={demoSubdomainSlug} />;
 
-  if (segments.length === 0) {
-    return <Landing navigate={navigate} />;
-  }
+  if (segments.length === 0) return <Landing navigate={navigate} />;
 
   if (segments[0] === 'dashboard') {
     if (segments[1] === 'create') return <CreateDemo navigate={navigate} />;
@@ -98,25 +76,21 @@ function App() {
   }
 
   const slug = segments[0];
-  const sharedConfig = query.get('config');
-  const client = sharedConfig ? decodeClientConfig(sharedConfig) : getClientBySlug(slug);
-  const validSharedClient = client && client.slug === slug ? client : undefined;
+  const client = getClientBySlug(slug);
 
-  if (!validSharedClient) {
+  if (!client) {
     return (
       <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-3">Demo not found</h1>
-          <p className="text-white/50 text-sm mb-6">
-            No client configuration exists for <code className="text-sky-400">/{slug}</code>
-          </p>
+          <p className="text-white/50 text-sm mb-6">No client configuration exists for <code className="text-sky-400">/{slug}</code></p>
           <button onClick={() => navigate('/dashboard')} className="text-sky-400 hover:text-sky-300 text-sm font-medium">Back to Dashboard</button>
         </div>
       </div>
     );
   }
 
-  return <ClientSite client={validSharedClient} />;
+  return <ClientSite client={client} />;
 }
 
 export default App;
