@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from '@/utils/router';
-import { fetchRemoteClient, getClientBySlug } from '@/data/clientRegistry';
+import { fetchRemoteClient, getClientBySlug, setActiveUser } from '@/data/clientRegistry';
 import { getSession, type AuthUser } from '@/data/auth';
 import type { ClientConfig } from '@/types/client';
 import Landing from '@/pages/Landing';
@@ -41,9 +41,9 @@ function RemoteDemo({ slug }: { slug: string }) {
 function ProtectedDashboard({ segments, navigate }: { segments: string[]; navigate: (to: string) => void }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [checking, setChecking] = useState(true);
-  useEffect(() => { getSession().then(setUser).catch(() => setUser(null)).finally(() => setChecking(false)); }, []);
+  useEffect(() => { getSession().then((current) => { setUser(current); setActiveUser(current?.id || null); }).catch(() => { setUser(null); setActiveUser(null); }).finally(() => setChecking(false)); }, []);
   if (checking) return <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center text-sm text-white/50">Checking session…</div>;
-  if (!user) return <Login onAuthenticated={() => setUser({ id: 'authenticated', name: '', email: '' })} />;
+  if (!user) return <Login onAuthenticated={(authenticated) => { setActiveUser(authenticated.id); setUser(authenticated); }} />;
   if (segments[1] === 'create') return <CreateDemo navigate={navigate} />;
   if (segments[1] === 'edit' && segments[2]) return <EditDemo slug={segments[2]} navigate={navigate} />;
   if (segments[1] === 'preview' && segments[2]) return <PreviewDemo slug={segments[2]} navigate={navigate} />;
@@ -56,7 +56,7 @@ function App() {
   if (demoSubdomainSlug) return <RemoteDemo slug={demoSubdomainSlug} />;
   if (segments.length === 0) return <Landing navigate={navigate} />;
   if (segments[0] === 'demo' && segments[1]) return <RemoteDemo slug={segments[1]} />;
-  if (segments[0] === 'login') return <Login onAuthenticated={() => navigate('/dashboard')} />;
+  if (segments[0] === 'login') return <Login onAuthenticated={(user) => { setActiveUser(user.id); navigate('/dashboard'); }} />;
   if (segments[0] === 'dashboard') return <ProtectedDashboard segments={segments} navigate={navigate} />;
 
   const slug = segments[0];
