@@ -77,7 +77,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const slug = cleanSlug(req.query?.slug);
       if (!isValidSlug(slug)) return res.status(400).json({ error: 'Invalid demo slug.' });
 
-      const rows = await sql.query(`SELECT config FROM ${TABLE} WHERE slug = $1 LIMIT 1`, [slug]);
+      const rows = await sql`SELECT config FROM ${sql.unsafe(TABLE)} WHERE slug = ${slug} LIMIT 1`;
       if (!rows.length) return res.status(404).json({ error: 'Demo not found.' });
 
       const config = rows[0].config;
@@ -90,7 +90,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (action === 'list') {
-      const rows = await sql.query(`SELECT config FROM ${TABLE} ORDER BY updated_at DESC`);
+      const rows = await sql`SELECT config FROM ${sql.unsafe(TABLE)} ORDER BY updated_at DESC`;
       return res.status(200).json({ data: rows.map((row) => row.config).filter(validClient) });
     }
 
@@ -114,7 +114,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!isValidSlug(slug)) return res.status(400).json({ error: 'Invalid demo slug.' });
       if (client.slug !== slug) return res.status(400).json({ error: 'Slug must be lowercase letters, numbers, and hyphens only.' });
 
-      const existing = await sql.query(`SELECT slug, client_id FROM ${TABLE} WHERE slug = $1 OR client_id = $2 LIMIT 1`, [slug, client.id]);
+      const existing = await sql`SELECT slug, client_id FROM ${sql.unsafe(TABLE)} WHERE slug = ${slug} OR client_id = ${client.id} LIMIT 1`;
       if (existing.length) {
         const row = existing[0];
         if (mode === 'create' && row.client_id !== client.id) {
@@ -125,14 +125,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       }
 
-      await sql.query(`
-        INSERT INTO ${TABLE} (slug, client_id, config, updated_at)
-        VALUES ($1, $2, $3::jsonb, NOW())
+      await sql`
+        INSERT INTO ${sql.unsafe(TABLE)} (slug, client_id, config, updated_at)
+        VALUES (${slug}, ${client.id}, ${JSON.stringify(client)}::jsonb, NOW())
         ON CONFLICT (slug) DO UPDATE
         SET client_id = EXCLUDED.client_id,
             config = EXCLUDED.config,
             updated_at = NOW()
-      `, [slug, client.id, JSON.stringify(client)]);
+      `;
 
       return res.status(200).json({ ok: true, slug, url: `https://${slug}.demo.horizonworks.co.in/` });
     }
@@ -140,7 +140,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (action === 'delete') {
       const slug = cleanSlug(body?.slug);
       if (!isValidSlug(slug)) return res.status(400).json({ error: 'Invalid demo slug.' });
-      await sql.query(`DELETE FROM ${TABLE} WHERE slug = $1`, [slug]);
+      await sql`DELETE FROM ${sql.unsafe(TABLE)} WHERE slug = ${slug}`;
       return res.status(200).json({ ok: true });
     }
 
