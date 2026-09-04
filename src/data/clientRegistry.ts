@@ -3,6 +3,8 @@ import { demoBusiness } from './demoBusiness';
 
 const STORAGE_KEY = 'horizon-works-clients';
 const PROTECTED_IDS = ['demo-business'];
+const DEMO_DOMAIN_SUFFIX = '.demo.horizonworks.co.in';
+const DEMO_ENGINE_ORIGIN = 'https://demo-workspace1.vercel.app';
 
 function loadFromStorage(): ClientConfig[] {
   try {
@@ -71,9 +73,8 @@ export function deleteClient(id: string): void {
   saveToStorage(loadFromStorage().filter((c) => c.id !== id));
 }
 
-async function apiRequest(action: string, init?: RequestInit, params?: Record<string, string>): Promise<any> {
-  const search = new URLSearchParams({ action, ...(params || {}) });
-  const response = await fetch(`/api/demo-store?${search.toString()}`, {
+async function requestJson(url: string, init?: RequestInit): Promise<any> {
+  const response = await fetch(url, {
     ...init,
     headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
     cache: 'no-store',
@@ -81,6 +82,30 @@ async function apiRequest(action: string, init?: RequestInit, params?: Record<st
   const payload = await response.json().catch(() => null);
   if (!response.ok) throw new Error(payload?.error || `Demo API request failed (${response.status}).`);
   return payload;
+}
+
+async function apiRequest(action: string, init?: RequestInit, params?: Record<string, string>): Promise<any> {
+  const search = new URLSearchParams({ action, ...(params || {}) });
+  const path = `/api/demo-store?${search.toString()}`;
+  const hostname = window.location.hostname.toLowerCase();
+
+  // A wildcard demo domain may be routed to the Vercel project for HTML while a
+  // phone/browser can still fail to resolve a serverless API path on the custom host.
+  // Public demo reads therefore use the canonical Demo Engine origin first, with a
+  // same-origin fallback for local/preview environments.
+  const publicDemo = hostname.endsWith(DEMO_DOMAIN_SUFFIX) && !hostname.includes('demo-workspace1.vercel.app');
+  const urls = publicDemo && action === 'get' ? [`${DEMO_ENGINE_ORIGIN}${path}`, path] : [path];
+  let lastError: unknown;
+
+  for (const url of urls) {
+    try {
+      return await requestJson(url, init);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error('Demo API request failed.');
 }
 
 export async function saveRemoteClient(client: ClientConfig, mode: 'create' | 'update' = 'create'): Promise<void> {
