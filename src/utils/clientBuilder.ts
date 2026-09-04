@@ -40,30 +40,60 @@ function contrastRatio(a: string, b: string): number {
   return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
 }
 
-function bestContrastingColor(backgrounds: string[], candidates: string[]): string {
-  return candidates.reduce((best, candidate) => {
-    const bestScore = Math.min(...backgrounds.map((background) => contrastRatio(best, background)));
-    const candidateScore = Math.min(...backgrounds.map((background) => contrastRatio(candidate, background)));
-    return candidateScore > bestScore ? candidate : best;
-  });
-}
-
 function safeHex(value: string, fallback: string): string {
   return hexToRgb(value) ? (value.startsWith('#') ? value : `#${value}`) : fallback;
 }
 
+function readableAgainst(background: string, light: string, dark: string): string {
+  return contrastRatio(light, background) >= contrastRatio(dark, background) ? light : dark;
+}
+
+function mix(a: string, b: string, amount: number): string {
+  const first = hexToRgb(a)!;
+  const second = hexToRgb(b)!;
+  const t = Math.max(0, Math.min(1, amount));
+  const channel = (x: number, y: number) => Math.round(x + (y - x) * t).toString(16).padStart(2, '0');
+  return `#${channel(first[0], second[0])}${channel(first[1], second[1])}${channel(first[2], second[2])}`;
+}
+
 function deriveBrandColors(partial: { primary: string; secondary: string; accent: string }): BrandColors {
-  const primary = safeHex(partial.primary, '#1a1a2e');
-  const secondary = safeHex(partial.secondary, '#16213e');
-  const accent = safeHex(partial.accent, '#c9a227');
-  const surfaces = [primary, secondary];
+  const primary = safeHex(partial.primary, '#111827');
+  const secondary = safeHex(partial.secondary, '#f3f4f6');
+  const accent = safeHex(partial.accent, '#b0893d');
+  const pLum = relativeLuminance(primary);
+  const sLum = relativeLuminance(secondary);
 
-  // Generated palettes may be light or dark. Choose typography from actual luminance
-  // instead of locking every generated site to white text and gray muted text.
-  const text = bestContrastingColor(surfaces, ['#ffffff', '#111111']);
-  const muted = bestContrastingColor(surfaces, ['#4b5563', '#374151', '#6b7280', '#d1d5db', '#e5e7eb', '#f3f4f6']);
+  let background: string;
+  let surface: string;
+  if (pLum < 0.45 && sLum > 0.55) {
+    background = primary;
+    surface = secondary;
+  } else if (pLum > 0.55 && sLum < 0.45) {
+    background = secondary;
+    surface = primary;
+  } else if (pLum > 0.55 && sLum > 0.55) {
+    background = mix(primary, '#ffffff', 0.78);
+    surface = mix(secondary, '#ffffff', 0.58);
+  } else if (pLum < 0.45 && sLum < 0.45) {
+    background = pLum <= sLum ? primary : secondary;
+    const lighter = pLum <= sLum ? secondary : primary;
+    surface = mix(lighter, '#ffffff', 0.08);
+  } else {
+    background = pLum <= sLum ? primary : secondary;
+    surface = pLum <= sLum ? secondary : primary;
+  }
 
-  return { primary, secondary, accent, background: primary, surface: secondary, text, muted };
+  const text = readableAgainst(background, '#f8fafc', '#111827');
+  const muted = readableAgainst(background, '#cbd5e1', '#64748b');
+  return {
+    primary,
+    secondary,
+    accent,
+    background,
+    surface,
+    text,
+    muted,
+  };
 }
 
 interface FormToClientInput {
