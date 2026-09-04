@@ -38,6 +38,12 @@ export default function CreateDemo({ navigate }: { navigate: (to: string) => voi
     }
   };
 
+  const handleOpenDemo = () => {
+    if (demoUrl) {
+      window.open(demoUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
       <header className="border-b border-white/10">
@@ -63,7 +69,7 @@ export default function CreateDemo({ navigate }: { navigate: (to: string) => voi
             <div className="mb-8 rounded-xl border border-sky-400/20 bg-sky-500/5 p-4 flex items-start gap-3">
               <Info size={18} className="text-sky-400 shrink-0 mt-0.5" />
               <p className="text-sm text-sky-200/70">
-                A URL-safe slug is generated from the business name. If a slug already exists, a number is appended automatically. The generated share link is self-contained and does not depend on the recipient having your browser storage.
+                A URL-safe slug is generated from the business name. If a slug already exists, a number is appended automatically. The generated share link uses your demo subdomain and contains the configuration needed to open the site on another device.
               </p>
             </div>
 
@@ -114,7 +120,7 @@ export default function CreateDemo({ navigate }: { navigate: (to: string) => voi
 
             <div className="flex items-center justify-center gap-4">
               <button
-                onClick={() => navigate(`/${createdSlug}`)}
+                onClick={handleOpenDemo}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-semibold text-sm transition-all duration-300 hover:scale-105 shadow-lg shadow-sky-500/20"
               >
                 <ExternalLink size={18} />
