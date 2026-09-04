@@ -62,10 +62,9 @@ async function ensureSchema(sql: ReturnType<typeof neon>) {
     )
   `;
   await sql`ALTER TABLE horizon_demo_configs ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ`;
-  // Older demos receive the same seven-day trial from their original creation time.
   await sql`
     UPDATE horizon_demo_configs
-    SET expires_at = created_at + (${TRIAL_DAYS} || ' days')::interval
+    SET expires_at = created_at + make_interval(days => ${TRIAL_DAYS})
     WHERE expires_at IS NULL
   `;
 }
