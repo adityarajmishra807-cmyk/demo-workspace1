@@ -48,35 +48,33 @@ export default function Navbar({ client }: { client: ClientConfig }) {
   }, [filtered.map((link) => link.href).join('|')]);
 
   useEffect(() => {
-    const closeOnResize = () => {
-      if (window.innerWidth >= 768) setOpen(false);
-    };
+    const closeOnResize = () => { if (window.innerWidth >= 768) setOpen(false); };
     window.addEventListener('resize', closeOnResize);
     return () => window.removeEventListener('resize', closeOnResize);
   }, []);
 
+  useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
+
   return (
     <>
       <header
-        className={cn(
-          'fixed top-0 left-0 right-0 z-50 transition-all duration-500',
-          scrolled
-            ? 'bg-[var(--brand-background)]/88 backdrop-blur-xl shadow-2xl shadow-black/15 border-b border-white/5'
-            : 'bg-transparent'
-        )}
+        className={cn('fixed left-0 right-0 top-0 z-50 transition-all duration-500', scrolled ? 'border-b border-white/5 bg-[var(--brand-background)]/88 shadow-2xl shadow-black/15 backdrop-blur-xl' : 'bg-transparent')}
       >
         <nav className={cn('container-base flex items-center justify-between transition-all duration-500', scrolled ? 'py-3 md:py-3.5' : 'py-5 md:py-6')}>
-          <a href="#" className="flex items-center gap-3 group">
+          <a href="#" onClick={() => setOpen(false)} className="group flex min-w-0 items-center gap-3">
             {client.logo ? (
-              <img src={client.logo} alt={client.businessName} className={cn('w-auto transition-all duration-500', scrolled ? 'h-8' : 'h-9')} />
+              <img src={client.logo} alt={client.businessName} className={cn('h-auto w-auto max-w-[180px] object-contain object-left transition-all duration-500', scrolled ? 'max-h-8' : 'max-h-9')} />
             ) : (
-              <span className={cn('font-bold tracking-tight transition-all duration-500', scrolled ? 'text-lg md:text-xl' : 'text-xl md:text-2xl')} style={{ color: 'var(--brand-text)' }}>
+              <span className={cn('max-w-[58vw] truncate font-bold tracking-tight transition-all duration-500', scrolled ? 'text-lg md:text-xl' : 'text-xl md:text-2xl')} style={{ color: 'var(--brand-text)' }}>
                 {client.businessName}
               </span>
             )}
           </a>
 
-          <div className="hidden md:flex items-center gap-7 lg:gap-9">
+          <div className="hidden items-center gap-7 md:flex lg:gap-9">
             {filtered.map((link) => {
               const active = activeSection === link.href;
               return (
@@ -96,40 +94,44 @@ export default function Navbar({ client }: { client: ClientConfig }) {
             {client.ctaText && client.contact && (
               <a
                 href="#contact"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                style={{
-                  background: scrolled ? 'var(--brand-accent)' : 'var(--brand-text)',
-                  color: scrolled ? 'var(--brand-on-accent)' : 'var(--brand-background)',
-                }}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                style={{ background: scrolled ? 'var(--brand-accent)' : 'var(--brand-text)', color: scrolled ? 'var(--brand-on-accent)' : 'var(--brand-background)' }}
               >
                 {client.ctaText}
               </a>
             )}
           </div>
 
-          <button className="md:hidden p-2 rounded-full transition-colors hover:bg-white/10" onClick={() => setOpen(!open)} aria-label="Toggle menu" style={{ color: 'var(--brand-text)' }}>
+          <button
+            className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/10 md:hidden"
+            onClick={() => setOpen(!open)}
+            aria-label={open ? 'Close menu' : 'Open menu'}
+            aria-expanded={open}
+            style={{ color: 'var(--brand-text)' }}
+          >
             {open ? <X size={22} /> : <Menu size={22} />}
           </button>
         </nav>
-
-        <div className="absolute left-0 right-0 bottom-0 h-px origin-left transition-transform duration-150" style={{ background: 'var(--brand-accent)', transform: `scaleX(${Math.min(window.scrollY / Math.max(document.documentElement.scrollHeight - window.innerHeight, 1), 1)})` }} />
       </header>
 
       {open && (
-        <div className="md:hidden fixed inset-x-0 top-[64px] z-40 border-t backdrop-blur-2xl shadow-2xl" style={{ background: 'rgba(var(--brand-background-rgb, 10 10 15), 0.94)', borderColor: 'rgba(var(--brand-muted-rgb), 0.12)' }}>
-          <div className="container-base flex flex-col gap-1 py-4">
-            {filtered.map((link) => (
-              <a key={link.href} href={link.href} onClick={() => setOpen(false)} className="py-3 px-2 text-base font-medium transition-colors" style={{ color: activeSection === link.href ? 'var(--brand-accent)' : 'var(--brand-text)' }}>
-                {link.label}
-              </a>
-            ))}
-            {client.ctaText && (
-              <a href="#contact" onClick={() => setOpen(false)} className="mt-2 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-base font-semibold" style={{ background: 'var(--brand-accent)', color: 'var(--brand-on-accent)' }}>
-                {client.ctaText}
-              </a>
-            )}
+        <>
+          <button aria-label="Close menu" className="fixed inset-0 z-40 bg-black/45 md:hidden" onClick={() => setOpen(false)} />
+          <div className="fixed inset-x-3 top-[72px] z-50 overflow-hidden rounded-2xl border shadow-2xl md:hidden" style={{ background: 'rgba(var(--brand-background-rgb, 10 10 15), 0.96)', borderColor: 'rgba(var(--brand-muted-rgb), 0.14)' }}>
+            <div className="container-base flex flex-col gap-1 px-3 py-3">
+              {filtered.map((link) => (
+                <a key={link.href} href={link.href} onClick={() => setOpen(false)} className="rounded-xl px-3 py-3.5 text-base font-medium transition-colors hover:bg-white/5" style={{ color: activeSection === link.href ? 'var(--brand-accent)' : 'var(--brand-text)' }}>
+                  {link.label}
+                </a>
+              ))}
+              {client.ctaText && (
+                <a href="#contact" onClick={() => setOpen(false)} className="mt-2 inline-flex min-h-12 items-center justify-center rounded-full px-5 py-3 text-base font-semibold" style={{ background: 'var(--brand-accent)', color: 'var(--brand-on-accent)' }}>
+                  {client.ctaText}
+                </a>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );
