@@ -5,7 +5,14 @@ type DemoRecord = Record<string, any>;
 const TABLE = 'horizon_demo_configs';
 
 function getConnectionString() {
-  return process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING || '';
+  return (
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.POSTGRES_URL_NON_POOLING ||
+    // Supports the Neon integration when its custom prefix was set to STORAGE.
+    process.env.STORAGE_URL ||
+    ''
+  );
 }
 
 function cleanSlug(value: unknown): string {
