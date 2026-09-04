@@ -82,6 +82,7 @@ export interface ClientConfig {
   fontStyle: FontStyle;
   ctaText?: string;
   secondaryCtaText?: string;
+  expiresAt?: string;
 }
 
 export interface ClientSummary {
