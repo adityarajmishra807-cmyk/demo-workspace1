@@ -17,15 +17,7 @@ function loadFromStorage(): ClientConfig[] {
 }
 
 function saveToStorage(clients: ClientConfig[]): void {
-  const serialized = JSON.stringify(clients);
-  try {
-    localStorage.setItem(STORAGE_KEY, serialized);
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved !== serialized) throw new Error('Browser storage did not persist the client data.');
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Browser storage is unavailable.';
-    throw new Error(`Could not save client data. ${message}`);
-  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
 }
 
 export function getAllClients(): ClientConfig[] {
@@ -79,36 +71,48 @@ export function deleteClient(id: string): void {
   saveToStorage(loadFromStorage().filter((c) => c.id !== id));
 }
 
-export function mergeRemoteClients(clients: ClientConfig[]): void {
-  if (!Array.isArray(clients) || clients.length === 0) return;
-  const stored = loadFromStorage();
-  const remoteById = new Map(clients.map((client) => [client.id, client]));
-  const remoteBySlug = new Map(clients.map((client) => [client.slug, client]));
-  const merged: ClientConfig[] = [];
-  const seenRemoteIds = new Set<string>();
+async function apiRequest(action: string, init?: RequestInit): Promise<any> {
+  const response = await fetch(`/api/demo-store?action=${action}`, {
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
+    cache: 'no-store',
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(payload?.error || `Demo API request failed (${response.status}).`);
+  return payload;
+}
 
-  for (const local of stored) {
-    const remote = remoteById.get(local.id) || remoteBySlug.get(local.slug);
-    if (remote) {
-      merged.push(remote);
-      seenRemoteIds.add(remote.id);
-    } else {
-      merged.push(local);
-    }
-  }
+export async function saveRemoteClient(client: ClientConfig, mode: 'create' | 'update' = 'create'): Promise<void> {
+  await apiRequest('save', {
+    method: 'POST',
+    body: JSON.stringify({ client, mode }),
+  });
+}
 
-  for (const remote of clients) {
-    if (!seenRemoteIds.has(remote.id) && !merged.some((item) => item.slug === remote.slug)) merged.push(remote);
-  }
-
-  saveToStorage(merged);
+export async function deleteRemoteClient(slug: string): Promise<void> {
+  await apiRequest('delete', {
+    method: 'POST',
+    body: JSON.stringify({ slug }),
+  });
 }
 
 export async function syncRemoteClients(): Promise<ClientConfig[]> {
-  const response = await fetch('/api/demo-store?action=list', { cache: 'no-store' });
-  if (!response.ok) throw new Error((await response.json().catch(() => null))?.error || 'Could not sync demos.');
-  const payload = await response.json();
+  const payload = await apiRequest('list');
   const clients = Array.isArray(payload?.data) ? payload.data as ClientConfig[] : [];
-  mergeRemoteClients(clients);
+  if (clients.length) {
+    const byId = new Map(clients.map((client) => [client.id, client]));
+    const bySlug = new Map(clients.map((client) => [client.slug, client]));
+    const local = loadFromStorage();
+    const merged = local.map((item) => byId.get(item.id) || bySlug.get(item.slug) || item);
+    for (const remote of clients) {
+      if (!merged.some((item) => item.id === remote.id || item.slug === remote.slug)) merged.push(remote);
+    }
+    saveToStorage(merged);
+  }
   return clients;
+}
+
+export async function fetchRemoteClient(slug: string): Promise<ClientConfig | undefined> {
+  const payload = await apiRequest(`get&slug=${encodeURIComponent(slug)}`);
+  return payload?.data as ClientConfig | undefined;
 }
