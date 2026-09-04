@@ -37,9 +37,17 @@ export default function PreviewDemo({ slug, navigate }: { slug: string; navigate
           <button onClick={() => void load()} disabled={loading} title="Refresh preview" className="p-2 rounded-lg hover:bg-white/10 text-white/60 disabled:opacity-40 transition-colors">
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
-          <button onClick={() => window.open(publicUrl, '_blank', 'noopener,noreferrer')} title="Open public demo" className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-sm font-medium transition-colors">
-            <ExternalLink size={15} /> <span className="hidden sm:inline">Open Public</span>
-          </button>
+          <a
+            href={publicUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`Open public demo: ${publicUrl}`}
+            aria-label="Open public demo in a new tab"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-sm font-medium transition-colors"
+          >
+            <ExternalLink size={15} />
+            <span className="hidden sm:inline">Open Public</span>
+          </a>
         </div>
       </div>
 
