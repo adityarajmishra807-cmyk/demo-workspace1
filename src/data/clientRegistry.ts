@@ -71,8 +71,9 @@ export function deleteClient(id: string): void {
   saveToStorage(loadFromStorage().filter((c) => c.id !== id));
 }
 
-async function apiRequest(action: string, init?: RequestInit): Promise<any> {
-  const response = await fetch(`/api/demo-store?action=${action}`, {
+async function apiRequest(action: string, init?: RequestInit, params?: Record<string, string>): Promise<any> {
+  const search = new URLSearchParams({ action, ...(params || {}) });
+  const response = await fetch(`/api/demo-store?${search.toString()}`, {
     ...init,
     headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
     cache: 'no-store',
@@ -113,6 +114,6 @@ export async function syncRemoteClients(): Promise<ClientConfig[]> {
 }
 
 export async function fetchRemoteClient(slug: string): Promise<ClientConfig | undefined> {
-  const payload = await apiRequest(`get&slug=${encodeURIComponent(slug)}`);
+  const payload = await apiRequest('get', undefined, { slug });
   return payload?.data as ClientConfig | undefined;
 }
