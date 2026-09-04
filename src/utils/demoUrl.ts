@@ -1,5 +1,7 @@
 import type { ClientConfig } from '@/types/client';
 
+const DEMO_DOMAIN = 'demo.horizonworks.co.in';
+
 function bytesToBase64Url(bytes: Uint8Array): string {
   let binary = '';
   const chunkSize = 0x8000;
@@ -48,5 +50,5 @@ export function decodeClientConfig(value: string): ClientConfig | undefined {
 
 export function buildShareUrl(client: ClientConfig): string {
   const encoded = encodeClientConfig(client);
-  return `${window.location.origin}/#/${client.slug}?config=${encoded}`;
+  return `https://${client.slug}.${DEMO_DOMAIN}/?config=${encodeURIComponent(encoded)}`;
 }
