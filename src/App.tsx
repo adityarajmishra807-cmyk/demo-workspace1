@@ -22,7 +22,7 @@ function App() {
   const demoSubdomainSlug = getDemoSubdomainSlug();
 
   // Demo subdomains are intentionally isolated from the management dashboard.
-  // The only source of configuration here is the signed/shareable URL payload.
+  // The configuration is carried by the shareable URL payload.
   if (demoSubdomainSlug) {
     const sharedConfig = new URLSearchParams(window.location.search).get('config');
     const client = sharedConfig
