@@ -30,21 +30,15 @@ export default function PreviewDemo({ slug, navigate }: { slug: string; navigate
     <div className="min-h-screen bg-[#08090d] text-white flex flex-col">
       <div className="sticky top-0 z-[100] h-14 shrink-0 border-b border-white/10 bg-[#0c0d12]/95 backdrop-blur-md flex items-center justify-between px-4 md:px-6">
         <button onClick={() => navigate('/dashboard')} className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors">
-          <ArrowLeft size={16} /> Dashboard
+          <ArrowLeft size={16} />
+          Dashboard
         </button>
         <div className="flex items-center gap-2">
           <span className="hidden sm:inline text-xs text-white/30 font-mono">{slug}.demo.horizonworks.co.in</span>
           <button onClick={() => void load()} disabled={loading} title="Refresh preview" className="p-2 rounded-lg hover:bg-white/10 text-white/60 disabled:opacity-40 transition-colors">
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
-          <a
-            href={publicUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            title={`Open public demo: ${publicUrl}`}
-            aria-label="Open public demo in a new tab"
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-sm font-medium transition-colors"
-          >
+          <a href={publicUrl} target="_blank" rel="noopener noreferrer" title="Open public demo" aria-label={`Open public demo for ${slug}`} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-sm font-medium transition-colors">
             <ExternalLink size={15} />
             <span className="hidden sm:inline">Open Public</span>
           </a>
