@@ -1,6 +1,7 @@
 import type { ClientConfig } from '@/types/client';
 
 const DEMO_DOMAIN = 'demo.horizonworks.co.in';
+const LEGACY_CONFIG_PARAM = 'config';
 
 function bytesToBase64Url(bytes: Uint8Array): string {
   let binary = '';
@@ -49,6 +50,11 @@ export function decodeClientConfig(value: string): ClientConfig | undefined {
 }
 
 export function buildShareUrl(client: ClientConfig): string {
-  const encoded = encodeClientConfig(client);
-  return `https://${client.slug}.${DEMO_DOMAIN}/?config=${encodeURIComponent(encoded)}`;
+  return `https://${client.slug}.${DEMO_DOMAIN}/`;
+}
+
+export function getLegacyConfigFromSearch(search: string): ClientConfig | undefined {
+  const params = new URLSearchParams(search);
+  const encoded = params.get(LEGACY_CONFIG_PARAM);
+  return encoded ? decodeClientConfig(encoded) : undefined;
 }
