@@ -14,9 +14,16 @@
   --brand-muted: #a0a0b0;
   --brand-primary-rgb: 26 26 46;
   --brand-secondary-rgb: 22 33 62;
+  --brand-background-rgb: 15 15 26;
+  --brand-surface-rgb: 26 26 46;
   --brand-accent-rgb: 201 162 39;
   --brand-text-rgb: 245 245 245;
   --brand-muted-rgb: 160 160 176;
+  --brand-background-text: #f8fafc;
+  --brand-background-muted: #cbd5e1;
+  --brand-surface-text: #f8fafc;
+  --brand-surface-muted: #cbd5e1;
+  --brand-on-accent: #111827;
   --brand-accent-soft: rgba(201, 162, 39, 0.15);
   --brand-accent-border: rgba(201, 162, 39, 0.4);
   --font-heading: 'Playfair Display', Georgia, serif;
@@ -29,54 +36,17 @@
 [data-font='editorial'] { --font-heading: 'Playfair Display', Georgia, serif; --font-body: 'DM Sans', system-ui, sans-serif; }
 
 * { box-sizing: border-box; }
-
 html { scroll-behavior: smooth; overflow-x: hidden; }
-
-body {
-  margin: 0;
-  min-width: 320px;
-  font-family: var(--font-body);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: #0a0a0f;
-  color: #fff;
-  overflow-x: hidden;
-}
-
+body { margin: 0; min-width: 320px; font-family: var(--font-body); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; background: #0a0a0f; color: #fff; overflow-x: hidden; }
 button, a { -webkit-tap-highlight-color: transparent; }
+img { max-width: 100%; height: auto; }
 
-.client-site {
-  background: var(--brand-background);
-  color: var(--brand-text);
-  font-family: var(--font-body);
-  min-height: 100vh;
-  width: 100%;
-  overflow-x: clip;
-}
-
-.client-site h1,
-.client-site h2,
-.client-site h3,
-.client-site h4 { font-family: var(--font-heading); }
-
-.container-base {
-  width: 100%;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-}
-
-@media (min-width: 768px) {
-  .container-base { padding-left: 2rem; padding-right: 2rem; }
-}
-
-@media (min-width: 1024px) {
-  .container-base { padding-left: 3rem; padding-right: 3rem; }
-}
-
-.section-base { width: 100%; overflow-x: hidden; }
-
+.client-site { background: var(--brand-background); color: var(--brand-text); font-family: var(--font-body); min-height: 100vh; width: 100%; overflow-x: clip; }
+.client-site h1, .client-site h2, .client-site h3, .client-site h4 { font-family: var(--font-heading); }
+.container-base { width: 100%; max-width: 1280px; margin: 0 auto; padding-left: 1.5rem; padding-right: 1.5rem; }
+@media (min-width: 768px) { .container-base { padding-left: 2rem; padding-right: 2rem; } }
+@media (min-width: 1024px) { .container-base { padding-left: 3rem; padding-right: 3rem; } }
+.section-base { width: 100%; overflow-x: clip; }
 .template-luxury .container-base { max-width: 1200px; }
 .template-luxury { letter-spacing: 0.01em; }
 .template-photography .container-base { max-width: 1400px; }
@@ -85,76 +55,38 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .template-restaurant .container-base { max-width: 1200px; }
 .template-professional .container-base { max-width: 1150px; }
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes scrollLine {
-  0% { transform: scaleY(0); transform-origin: top; }
-  50% { transform: scaleY(1); transform-origin: top; }
-  51% { transform-origin: bottom; }
-  100% { transform: scaleY(0); transform-origin: bottom; }
-}
-
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes scrollLine { 0% { transform: scaleY(0); transform-origin: top; } 50% { transform: scaleY(1); transform-origin: top; } 51% { transform-origin: bottom; } 100% { transform: scaleY(0); transform-origin: bottom; } }
 .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
 .animate-scroll-line { animation: scrollLine 2s ease-in-out infinite; }
 .animation-delay-100 { animation-delay: 0.1s; opacity: 0; }
 .animation-delay-200 { animation-delay: 0.2s; opacity: 0; }
 .animation-delay-300 { animation-delay: 0.3s; opacity: 0; }
-
 .client-site::-webkit-scrollbar { width: 8px; }
 .client-site::-webkit-scrollbar-track { background: var(--brand-background); }
 .client-site::-webkit-scrollbar-thumb { background: rgba(var(--brand-muted-rgb), 0.3); border-radius: 4px; }
 
-img { max-width: 100%; height: auto; }
-
-/* ===== Mobile / touch ===== */
 @media (max-width: 767px) {
-  .container-base { padding-left: 1.125rem; padding-right: 1.125rem; }
-
+  .container-base { padding-left: 1rem; padding-right: 1rem; }
   .section-base { scroll-margin-top: 76px; }
-
-  .client-site h1 {
-    font-size: clamp(2.45rem, 12vw, 4rem);
-    line-height: 0.98;
-    letter-spacing: -0.035em;
-  }
-
-  .client-site h2 {
-    font-size: clamp(2.15rem, 10vw, 3.25rem);
-    line-height: 1.02;
-  }
-
-  .client-site h1,
-  .client-site h2,
-  .client-site h3,
-  .client-site h4,
-  .client-site p,
-  .client-site a,
-  .client-site span { overflow-wrap: anywhere; }
-
-  .client-site section:first-of-type { min-height: 100svh; }
-
-  .client-site a,
-  .client-site button { touch-action: manipulation; }
-
-  /* Keep generated gallery layouts inside the viewport. */
+  .client-site h1 { font-size: clamp(2.45rem, 12vw, 4rem); line-height: 0.98; letter-spacing: -0.035em; }
+  .client-site h2 { font-size: clamp(2.15rem, 10vw, 3.25rem); line-height: 1.02; }
+  .client-site h1, .client-site h2, .client-site h3, .client-site h4, .client-site p, .client-site a, .client-site span { overflow-wrap: anywhere; }
+  .client-site section:first-of-type { min-height: 100svh; min-height: 100vh; }
+  .client-site a, .client-site button { touch-action: manipulation; }
   .client-site .grid > .col-span-2 { grid-column: span 2 / span 2; }
-
-  /* Hover states have no reliable meaning on touch screens. */
+  .client-site .grid { min-width: 0; }
   .client-site .group:hover { transform: none; }
+  .client-site input, .client-site textarea, .client-site select { max-width: 100%; min-width: 0; }
 }
 
 @media (max-width: 420px) {
-  .container-base { padding-left: 1rem; padding-right: 1rem; }
+  .container-base { padding-left: 0.875rem; padding-right: 0.875rem; }
+  .client-site h1 { font-size: clamp(2.25rem, 11.5vw, 3.25rem); }
+  .client-site h2 { font-size: clamp(2rem, 9.5vw, 2.75rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
