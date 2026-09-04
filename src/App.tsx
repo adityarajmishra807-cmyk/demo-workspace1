@@ -7,8 +7,44 @@ import CreateDemo from '@/pages/CreateDemo';
 import EditDemo from '@/pages/EditDemo';
 import ClientSite from '@/pages/ClientSite';
 
+const DEMO_DOMAIN_SUFFIX = '.demo.horizonworks.co.in';
+
+function getDemoSubdomainSlug(): string | undefined {
+  const hostname = window.location.hostname.toLowerCase();
+  if (!hostname.endsWith(DEMO_DOMAIN_SUFFIX)) return undefined;
+
+  const slug = hostname.slice(0, -DEMO_DOMAIN_SUFFIX.length);
+  return slug && !slug.includes('.') ? slug : undefined;
+}
+
 function App() {
   const { segments, query, navigate } = useRouter();
+  const demoSubdomainSlug = getDemoSubdomainSlug();
+
+  // Demo subdomains are intentionally isolated from the management dashboard.
+  // The only source of configuration here is the signed/shareable URL payload.
+  if (demoSubdomainSlug) {
+    const sharedConfig = new URLSearchParams(window.location.search).get('config');
+    const client = sharedConfig
+      ? decodeClientConfig(sharedConfig)
+      : getClientBySlug(demoSubdomainSlug);
+    const validClient = client && client.slug === demoSubdomainSlug ? client : undefined;
+
+    if (!validClient) {
+      return (
+        <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center px-6">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-3">Demo not found</h1>
+            <p className="text-white/50 text-sm">
+              This demo link is invalid or has expired.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return <ClientSite client={validClient} />;
+  }
 
   if (segments.length === 0) {
     return <Landing navigate={navigate} />;
