@@ -9,7 +9,9 @@ function getConnectionString() {
     process.env.DATABASE_URL ||
     process.env.POSTGRES_URL ||
     process.env.POSTGRES_URL_NON_POOLING ||
-    // Supports the Neon integration when its custom prefix was set to STORAGE.
+    // Neon integration with the custom STORAGE prefix used by this project.
+    process.env.STORAGE_POSTGRES_URL_NON_POOLING ||
+    process.env.STORAGE_POSTGRES_URL ||
     process.env.STORAGE_URL ||
     ''
   );
