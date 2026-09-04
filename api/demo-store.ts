@@ -3,7 +3,6 @@ import { neon } from '@neondatabase/serverless';
 import { createHash } from 'node:crypto';
 
 type DemoRecord = Record<string, any>;
-const TABLE = 'horizon_demo_configs';
 const TRIAL_DAYS = 7;
 const SESSION_COOKIE = 'hw_session';
 
@@ -35,7 +34,10 @@ async function currentUser(sql: ReturnType<typeof neon>, req: VercelRequest) {
   return rows[0] || null;
 }
 async function ensureSchema(sql: ReturnType<typeof neon>) {
-  await sql`CREATE TABLE IF NOT EXISTS horizon_demo_configs (slug TEXT PRIMARY KEY, client_id TEXT NOT NULL UNIQUE, config JSONB NOT NULL, expires_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+  await sql`CREATE EXTENSION IF NOT EXISTS pgcrypto`;
+  await sql`CREATE TABLE IF NOT EXISTS horizon_users (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+  await sql`CREATE TABLE IF NOT EXISTS horizon_sessions (token_hash TEXT PRIMARY KEY, user_id UUID NOT NULL REFERENCES horizon_users(id) ON DELETE CASCADE, expires_at TIMESTAMPTZ NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+  await sql`CREATE TABLE IF NOT EXISTS horizon_demo_configs (slug TEXT PRIMARY KEY, client_id TEXT NOT NULL UNIQUE, config JSONB NOT NULL, expires_at TIMESTAMPTZ, owner_id UUID REFERENCES horizon_users(id) ON DELETE CASCADE, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
   await sql`ALTER TABLE horizon_demo_configs ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ`;
   await sql`ALTER TABLE horizon_demo_configs ADD COLUMN IF NOT EXISTS owner_id UUID REFERENCES horizon_users(id) ON DELETE CASCADE`;
   await sql`UPDATE horizon_demo_configs SET expires_at = created_at + make_interval(days => ${TRIAL_DAYS}) WHERE expires_at IS NULL`;
