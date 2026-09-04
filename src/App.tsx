@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from '@/utils/router';
 import { fetchRemoteClient, getClientBySlug, setActiveUser } from '@/data/clientRegistry';
-import { getSession, type AuthUser } from '@/data/auth';
+import { getSession, logout, type AuthUser } from '@/data/auth';
 import type { ClientConfig } from '@/types/client';
 import Landing from '@/pages/Landing';
 import Dashboard from '@/pages/Dashboard';
@@ -38,16 +38,23 @@ function RemoteDemo({ slug }: { slug: string }) {
   return <ClientSite client={client} />;
 }
 
+function AccountBar({ user, navigate }: { user: AuthUser; navigate: (to: string) => void }) {
+  const [busy, setBusy] = useState(false);
+  const handleLogout = async () => {
+    setBusy(true);
+    try { await logout(); } finally { setActiveUser(null); setBusy(false); navigate('/login'); }
+  };
+  return <div className="fixed right-4 top-4 z-50 flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-full border border-white/10 bg-[#11131a]/90 px-2 py-1.5 text-xs text-white/70 shadow-xl backdrop-blur-xl sm:right-6 sm:top-5"><span className="hidden max-w-40 truncate px-2 sm:block">{user.name || user.email}</span><button onClick={() => void handleLogout()} disabled={busy} className="rounded-full bg-white/[0.06] px-3 py-1.5 font-medium text-white/75 transition hover:bg-white/10 hover:text-white disabled:opacity-50">{busy ? '…' : 'Sign out'}</button></div>;
+}
+
 function ProtectedDashboard({ segments, navigate }: { segments: string[]; navigate: (to: string) => void }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [checking, setChecking] = useState(true);
   useEffect(() => { getSession().then((current) => { setUser(current); setActiveUser(current?.id || null); }).catch(() => { setUser(null); setActiveUser(null); }).finally(() => setChecking(false)); }, []);
   if (checking) return <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center text-sm text-white/50">Checking session…</div>;
   if (!user) return <Login onAuthenticated={(authenticated) => { setActiveUser(authenticated.id); setUser(authenticated); }} />;
-  if (segments[1] === 'create') return <CreateDemo navigate={navigate} />;
-  if (segments[1] === 'edit' && segments[2]) return <EditDemo slug={segments[2]} navigate={navigate} />;
-  if (segments[1] === 'preview' && segments[2]) return <PreviewDemo slug={segments[2]} navigate={navigate} />;
-  return <Dashboard navigate={navigate} />;
+  const content = segments[1] === 'create' ? <CreateDemo navigate={navigate} /> : segments[1] === 'edit' && segments[2] ? <EditDemo slug={segments[2]} navigate={navigate} /> : segments[1] === 'preview' && segments[2] ? <PreviewDemo slug={segments[2]} navigate={navigate} /> : <Dashboard navigate={navigate} />;
+  return <><AccountBar user={user} navigate={navigate} />{content}</>;
 }
 
 function App() {
