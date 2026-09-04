@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Check, Copy, ExternalLink, Info } from 'lucide-react';
+import { ArrowLeft, Check, Copy, ExternalLink, Info, Clock3 } from 'lucide-react';
 import ClientForm, { emptyFormData, type ClientFormData } from '@/components/ClientForm';
 import { formToClientConfig } from '@/utils/clientBuilder';
 import { addClient, slugExists } from '@/data/clientRegistry';
@@ -10,6 +10,7 @@ type View = 'form' | 'success';
 export default function CreateDemo({ navigate }: { navigate: (to: string) => void }) {
   const [view, setView] = useState<View>('form');
   const [demoUrl, setDemoUrl] = useState('');
+  const [expiresAt, setExpiresAt] = useState('');
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
   const [publishing, setPublishing] = useState(false);
@@ -27,9 +28,10 @@ export default function CreateDemo({ navigate }: { navigate: (to: string) => voi
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload?.error || 'Could not publish the demo.');
 
-      addClient(config);
-      const url = buildShareUrl(config);
-      setDemoUrl(url);
+      const publishedConfig = { ...config, expiresAt: payload?.expiresAt || config.expiresAt };
+      addClient(publishedConfig);
+      setDemoUrl(payload?.url || buildShareUrl(publishedConfig));
+      setExpiresAt(payload?.expiresAt || '');
       setView('success');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not create the demo. Please try again.');
@@ -48,9 +50,9 @@ export default function CreateDemo({ navigate }: { navigate: (to: string) => voi
     }
   };
 
-  const handleOpenDemo = () => {
-    if (demoUrl) window.open(demoUrl, '_blank', 'noopener,noreferrer');
-  };
+  const formattedExpiry = expiresAt
+    ? new Date(expiresAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+    : '';
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
@@ -67,7 +69,7 @@ export default function CreateDemo({ navigate }: { navigate: (to: string) => voi
           <>
             <h2 className="text-2xl md:text-3xl font-bold mb-2">Create New Demo</h2>
             <p className="text-white/50 text-sm mb-8 max-w-2xl">
-              Fill in the business information below. The finished demo is published to your client subdomain and no longer depends on browser storage or a giant configuration URL.
+              Fill in the business information below. The finished demo is published to your client subdomain, works across devices, and receives a server-enforced 7-day trial.
             </p>
 
             <div className="mb-8 rounded-xl border border-sky-400/20 bg-sky-500/5 p-4 flex items-start gap-3">
@@ -94,7 +96,7 @@ export default function CreateDemo({ navigate }: { navigate: (to: string) => voi
             <h2 className="text-2xl md:text-3xl font-bold mb-3">Demo published successfully</h2>
             <p className="text-white/50 text-sm mb-8">This is the clean client URL you can send to the prospect.</p>
 
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 mb-8">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 mb-4">
               <p className="text-xs uppercase tracking-wider text-white/40 mb-3">Client Demo URL</p>
               <div className="flex items-center gap-3">
                 <code className="flex-1 text-sm text-sky-400 text-left break-all">{demoUrl}</code>
@@ -105,10 +107,15 @@ export default function CreateDemo({ navigate }: { navigate: (to: string) => voi
               </div>
             </div>
 
+            <div className="rounded-2xl border border-amber-400/20 bg-amber-500/5 p-4 mb-8 flex items-center justify-center gap-2 text-sm text-amber-200">
+              <Clock3 size={16} />
+              <span>7-day trial{formattedExpiry ? ` · expires ${formattedExpiry}` : ''}</span>
+            </div>
+
             {error && <div className="mb-6 rounded-xl border border-red-400/20 bg-red-500/5 p-4 text-sm text-red-300">{error}</div>}
 
             <div className="flex items-center justify-center gap-4">
-              <button onClick={handleOpenDemo} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-semibold text-sm transition-all duration-300 hover:scale-105 shadow-lg shadow-sky-500/20"><ExternalLink size={18} /> Open Demo</button>
+              <a href={demoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-semibold text-sm transition-all duration-300 hover:scale-105 shadow-lg shadow-sky-500/20"><ExternalLink size={18} /> Open Demo</a>
               <button onClick={() => navigate('/dashboard')} className="px-6 py-3 rounded-xl border border-white/15 hover:border-white/30 hover:bg-white/5 text-white font-semibold text-sm transition-all duration-300">Back to Dashboard</button>
             </div>
           </div>
