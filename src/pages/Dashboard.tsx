@@ -10,13 +10,23 @@ const templateLabels: Record<TemplateId, string> = {
 
 type DemoWithTrial = ClientConfig & { expiresAt?: string };
 
-function trialLabel(client?: ClientConfig): { text: string; expired: boolean } {
+type Countdown = { label: string; expired: boolean };
+
+function getCountdown(client?: ClientConfig): Countdown {
   const expiresAt = (client as DemoWithTrial | undefined)?.expiresAt;
-  if (!expiresAt) return { text: '7-day trial', expired: false };
-  const remainingMs = Date.parse(expiresAt) - Date.now();
-  if (!Number.isFinite(remainingMs) || remainingMs <= 0) return { text: 'Expired', expired: true };
-  const days = Math.ceil(remainingMs / 86400000);
-  return { text: `${days}d left`, expired: false };
+  if (!expiresAt) return { label: '7-day trial', expired: false };
+  const remaining = Date.parse(expiresAt) - Date.now();
+  if (!Number.isFinite(remaining) || remaining <= 0) return { label: 'Expired', expired: true };
+
+  const totalSeconds = Math.floor(remaining / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const label = days > 0
+    ? `${days}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`
+    : `${hours}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+  return { label, expired: false };
 }
 
 export default function Dashboard({ navigate }: { navigate: (to: string) => void }) {
@@ -25,8 +35,14 @@ export default function Dashboard({ navigate }: { navigate: (to: string) => void
   const [copiedId, setCopiedId] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState('');
+  const [, setNow] = useState(Date.now());
 
   const refresh = () => setSummaries(getClientSummaries());
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   const sync = async () => {
     setSyncing(true); setSyncError('');
@@ -72,12 +88,12 @@ export default function Dashboard({ navigate }: { navigate: (to: string) => void
           {summaries.length === 0 ? <div className="px-6 py-12 text-center text-white/40 text-sm">No demos configured yet.</div> : summaries.map((s) => {
             const client = getClientById(s.id);
             const protectedClient = isProtectedClient(s.id);
-            const trial = trialLabel(client);
+            const countdown = getCountdown(client);
             const publicUrl = client ? buildShareUrl(client) : '#';
-            return <div key={s.id} className="grid grid-cols-12 gap-4 px-6 py-4 border-t border-white/5 items-center hover:bg-white/[0.03] transition-colors"><div className="col-span-3 font-medium text-sm">{s.businessName}{protectedClient && <span className="ml-2 text-[10px] uppercase tracking-wider text-white/30 bg-white/5 px-1.5 py-0.5 rounded">test</span>}</div><div className="col-span-2 hidden md:block text-sm text-white/60">{s.industry}</div><div className="col-span-2 hidden md:block text-sm text-white/60">{templateLabels[s.template]}</div><div className="col-span-2 hidden md:block text-sm text-white/40 font-mono truncate">/{s.slug}</div><div className="col-span-2 hidden md:block"><span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${trial.expired ? 'bg-red-500/15 text-red-400' : 'bg-emerald-500/15 text-emerald-400'}`}><Clock3 size={12} /> {trial.text}</span></div><div className="col-span-9 md:col-span-1 text-right"><div className="flex items-center justify-end gap-1"><button onClick={() => handlePreview(s.id)} title="Preview inside Demo Engine" className="p-2 rounded-lg hover:bg-white/10 text-violet-400 transition-colors"><Eye size={16} /></button><button onClick={() => handleShare(s.id)} title="Copy share link" className="p-2 rounded-lg hover:bg-white/10 text-emerald-400 transition-colors">{copiedId === s.id ? <Check size={16} /> : <Copy size={16} />}</button>{client && <a href={publicUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open public demo for ${s.businessName}`} title="Open public demo" className="p-2 rounded-lg hover:bg-white/10 text-sky-400 transition-colors inline-flex"><ExternalLink size={16} /></a>}{!protectedClient && <button onClick={() => navigate(`/dashboard/edit/${s.slug}`)} title="Edit" className="p-2 rounded-lg hover:bg-white/10 text-white/60 transition-colors"> <Pencil size={16} /></button>}{!protectedClient && <button onClick={() => setDeleteTarget({ id: s.id, name: s.businessName, slug: s.slug })} title="Delete" className="p-2 rounded-lg hover:bg-red-500/10 text-red-400 transition-colors"><Trash2 size={16} /></button>}</div></div></div>;
+            return <div key={s.id} className="grid grid-cols-12 gap-4 px-6 py-4 border-t border-white/5 items-center hover:bg-white/[0.03] transition-colors"><div className="col-span-3 font-medium text-sm">{s.businessName}{protectedClient && <span className="ml-2 text-[10px] uppercase tracking-wider text-white/30 bg-white/5 px-1.5 py-0.5 rounded">test</span>}</div><div className="col-span-2 hidden md:block text-sm text-white/60">{s.industry}</div><div className="col-span-2 hidden md:block text-sm text-white/60">{templateLabels[s.template]}</div><div className="col-span-2 hidden md:block text-sm text-white/40 font-mono truncate">/{s.slug}</div><div className="col-span-2 hidden md:block"><span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-full font-mono tabular-nums ${countdown.expired ? 'bg-red-500/15 text-red-400' : countdown.label.startsWith('0h') ? 'bg-amber-500/15 text-amber-300' : 'bg-emerald-500/15 text-emerald-400'}`}><Clock3 size={12} /> {countdown.label}</span></div><div className="col-span-9 md:col-span-1 text-right"><div className="flex items-center justify-end gap-1"><button onClick={() => handlePreview(s.id)} title="Preview inside Demo Engine" className="p-2 rounded-lg hover:bg-white/10 text-violet-400 transition-colors"><Eye size={16} /></button><button onClick={() => handleShare(s.id)} title="Copy share link" className="p-2 rounded-lg hover:bg-white/10 text-emerald-400 transition-colors">{copiedId === s.id ? <Check size={16} /> : <Copy size={16} />}</button>{client && <a href={publicUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open public demo for ${s.businessName}`} title="Open public demo" className="p-2 rounded-lg hover:bg-white/10 text-sky-400 transition-colors inline-flex"><ExternalLink size={16} /></a>}{!protectedClient && <button onClick={() => navigate(`/dashboard/edit/${s.slug}`)} title="Edit" className="p-2 rounded-lg hover:bg-white/10 text-white/60 transition-colors"> <Pencil size={16} /></button>}{!protectedClient && <button onClick={() => setDeleteTarget({ id: s.id, name: s.businessName, slug: s.slug })} title="Delete" className="p-2 rounded-lg hover:bg-red-500/10 text-red-400 transition-colors"><Trash2 size={16} /></button>}</div></div></div>;
           })}
         </div>
-        <div className="mt-10 rounded-2xl border border-white/10 p-6 bg-white/[0.02]"><h3 className="text-sm font-semibold mb-3 text-white/80">Publishing</h3><p className="text-sm text-white/50 leading-6">Every demo gets a 7-day server-enforced trial. The public URL is <span className="text-sky-400">&lt;slug&gt;.demo.horizonworks.co.in</span>. Use the eye button for an in-engine preview and the external-link button for the public client URL.</p></div>
+        <div className="mt-10 rounded-2xl border border-white/10 p-6 bg-white/[0.02]"><h3 className="text-sm font-semibold mb-3 text-white/80">Publishing</h3><p className="text-sm text-white/50 leading-6">Every demo gets a 7-day server-enforced trial. The public URL is <span className="text-sky-400">&lt;slug&gt;.demo.horizonworks.co.in</span>. Use the countdown in the Trial column to see exactly how long each demo remains active.</p></div>
       </main>
       {deleteTarget && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setDeleteTarget(null)}><div className="max-w-sm w-full mx-6 rounded-2xl border border-white/10 bg-[#12121a] p-6" onClick={(e) => e.stopPropagation()}><div className="flex items-center justify-between mb-4"><h3 className="text-lg font-bold">Delete Demo</h3><button onClick={() => setDeleteTarget(null)} className="p-1 rounded-lg hover:bg-white/10 text-white/60 transition-colors"><X size={20} /></button></div><p className="text-sm text-white/50 mb-6">Delete <span className="text-white/80 font-medium">{deleteTarget.name}</span>? This removes the published demo and its local copy.</p><div className="flex items-center justify-end gap-3"><button onClick={() => setDeleteTarget(null)} className="px-4 py-2.5 rounded-xl text-sm font-medium text-white/60 hover:text-white transition-colors">Cancel</button><button onClick={() => void handleDelete()} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-400 text-white font-semibold text-sm transition-colors"><Trash2 size={16} /> Delete</button></div></div></div>}
     </div>
