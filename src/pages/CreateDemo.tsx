@@ -28,7 +28,7 @@ export default function CreateDemo({ navigate }: { navigate: (to: string) => voi
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload?.error || 'Could not publish the demo.');
 
-      const publishedConfig = { ...config, expiresAt: payload?.expiresAt || config.expiresAt };
+      const publishedConfig = payload?.expiresAt ? { ...config, expiresAt: payload.expiresAt } : config;
       addClient(publishedConfig);
       setDemoUrl(payload?.url || buildShareUrl(publishedConfig));
       setExpiresAt(payload?.expiresAt || '');
