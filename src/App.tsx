@@ -47,7 +47,7 @@ function ProtectedDashboard({ segments, navigate }: { segments: string[]; naviga
   if (segments[1] === 'create') return <CreateDemo navigate={navigate} />;
   if (segments[1] === 'edit' && segments[2]) return <EditDemo slug={segments[2]} navigate={navigate} />;
   if (segments[1] === 'preview' && segments[2]) return <PreviewDemo slug={segments[2]} navigate={navigate} />;
-  return <Dashboard navigate={navigate} user={user} />;
+  return <Dashboard navigate={navigate} />;
 }
 
 function App() {
