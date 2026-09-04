@@ -1,13 +1,10 @@
-import { ArrowRight, CheckCircle2, LayoutDashboard, Sparkles } from 'lucide-react';
-
-const stats = [
-  { value: '5', label: 'Templates' },
-  { value: '9', label: 'Reusable components' },
-  { value: '100%', label: 'Config-driven' },
-  { value: '0', label: 'Per-client code' },
-];
+import { useMemo } from 'react';
+import { ArrowRight, CheckCircle2, ExternalLink, LayoutDashboard, Sparkles } from 'lucide-react';
+import { getAllClients } from '@/data/clientRegistry';
 
 export default function Landing({ navigate }: { navigate: (to: string) => void }) {
+  const clients = useMemo(() => getAllClients().slice(0, 3), []);
+
   return (
     <main className="min-h-screen overflow-hidden bg-[#07090d] text-white selection:bg-sky-400/30">
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
@@ -34,7 +31,7 @@ export default function Landing({ navigate }: { navigate: (to: string) => void }
         </button>
       </header>
 
-      <section className="relative z-10 mx-auto flex min-h-[calc(100svh-80px)] w-full max-w-6xl flex-col items-center px-5 pb-10 pt-12 text-center sm:px-8 sm:pt-16 lg:pt-20">
+      <section className="relative z-10 mx-auto flex min-h-[calc(100svh-80px)] w-full max-w-6xl flex-col items-center px-5 pb-16 pt-12 text-center sm:px-8 sm:pt-16 lg:pt-20">
         <div className="inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-400/[0.07] px-3.5 py-2 text-[11px] font-medium tracking-wide text-sky-200 shadow-[0_0_30px_rgba(14,165,233,0.08)] sm:text-xs">
           <span className="relative flex h-1.5 w-1.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-60" />
@@ -81,29 +78,56 @@ export default function Landing({ navigate }: { navigate: (to: string) => void }
           ))}
         </div>
 
-        <div className="relative mt-12 w-full max-w-4xl sm:mt-14">
-          <div className="absolute -inset-8 -z-10 rounded-[40px] bg-sky-500/[0.06] blur-3xl" />
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] p-1.5 shadow-[0_30px_100px_rgba(0,0,0,0.42)] sm:rounded-3xl sm:p-2">
-            <div className="rounded-[13px] border border-white/[0.07] bg-[#0c0f15] p-4 sm:rounded-[22px] sm:p-6">
-              <div className="flex items-center justify-between border-b border-white/[0.07] pb-4">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-white/20" />
-                  <span className="h-2 w-2 rounded-full bg-white/20" />
-                  <span className="h-2 w-2 rounded-full bg-white/20" />
-                </div>
-                <span className="rounded-full border border-emerald-400/15 bg-emerald-400/[0.06] px-2.5 py-1 text-[9px] font-medium text-emerald-300/80 sm:text-[10px]">
-                  LIVE SYSTEM
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-2.5 pt-4 sm:grid-cols-4 sm:gap-3">
-                {stats.map((stat) => (
-                  <div key={stat.label} className="rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-4 text-left sm:rounded-2xl sm:px-4 sm:py-5">
-                    <p className="text-xl font-semibold tracking-tight text-sky-300 sm:text-2xl">{stat.value}</p>
-                    <p className="mt-1 text-[9px] leading-4 text-white/35 sm:text-[10px]">{stat.label}</p>
-                  </div>
-                ))}
-              </div>
+        <div className="mt-16 w-full max-w-5xl text-left sm:mt-20">
+          <div className="mb-7 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-300/70">Live output</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">Real demos. Same engine.</h2>
             </div>
+            <button onClick={() => navigate('/dashboard')} className="inline-flex items-center gap-1.5 text-xs font-medium text-white/40 transition hover:text-white">
+              Manage all demos <ArrowRight size={13} />
+            </button>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {clients.map((client, index) => {
+              const primary = client.brandColors?.primary || '#111827';
+              const secondary = client.brandColors?.secondary || '#0f172a';
+              const accent = client.brandColors?.accent || '#38bdf8';
+              const image = client.heroImage;
+              return (
+                <button
+                  key={client.id}
+                  onClick={() => navigate(`/${client.slug}`)}
+                  className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] text-left transition duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.055]"
+                >
+                  <div
+                    className="relative h-44 overflow-hidden"
+                    style={{
+                      backgroundImage: image
+                        ? `linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.62)), url(${image})`
+                        : `radial-gradient(circle at ${index === 1 ? '70%' : '30%'} 20%, ${accent}55, transparent 42%), linear-gradient(135deg, ${primary}, ${secondary})`,
+                      backgroundPosition: 'center',
+                      backgroundSize: 'cover',
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent" />
+                    <span className="absolute left-4 top-4 rounded-full border border-white/15 bg-black/25 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-white/70 backdrop-blur">
+                      {client.template} template
+                    </span>
+                    <span className="absolute bottom-4 left-4 right-4 truncate text-lg font-semibold tracking-tight text-white drop-shadow-lg">
+                      {client.businessName}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between px-4 py-3.5">
+                    <span className="truncate pr-3 text-xs text-white/40">{client.industry}</span>
+                    <span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-white/55 transition group-hover:text-white">
+                      Open <ExternalLink size={12} />
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
