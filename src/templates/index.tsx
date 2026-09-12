@@ -4,12 +4,9 @@ import PhotographyTemplate from '@/templates/PhotographyTemplate';
 import LocalServiceTemplate from '@/templates/LocalServiceTemplate';
 import RestaurantTemplate from '@/templates/RestaurantTemplate';
 import ProfessionalTemplate from '@/templates/ProfessionalTemplate';
-import { resolveTemplateV2 } from '@/templates/templateV2';
+import TemplateV2Renderer from '@/templates/TemplateV2Renderer';
 
-const templates: Record<
-  TemplateId,
-  React.ComponentType<{ client: ClientConfig }>
-> = {
+const templates: Record<TemplateId, React.ComponentType<{ client: ClientConfig }>> = {
   luxury: LuxuryTemplate,
   photography: PhotographyTemplate,
   'local-service': LocalServiceTemplate,
@@ -22,8 +19,7 @@ export function renderTemplate(client: ClientConfig) {
   return <Template client={client} />;
 }
 
-/** Phase 8 entry point. Legacy rendering remains unchanged. */
+/** V2 rendering uses the adaptive section architecture while legacy rendering remains available. */
 export function renderTemplateV2(client: ClientConfig) {
-  const Template = templates[resolveTemplateV2(client)] || LuxuryTemplate;
-  return <Template client={client} />;
+  return <TemplateV2Renderer client={client} />;
 }
