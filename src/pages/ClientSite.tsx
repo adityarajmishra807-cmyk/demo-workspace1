@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { ClientConfig } from '@/types/client';
 import { applyClientTheme, resetTheme } from '@/utils/theme';
-import { renderTemplate } from '@/templates';
+import { renderTemplateV2 } from '@/templates';
 
 function isExpired(client: ClientConfig): boolean {
   return Boolean(client.expiresAt && Date.parse(client.expiresAt) <= Date.now());
@@ -45,5 +45,5 @@ export default function ClientSite({ client }: { client: ClientConfig }) {
   }, [client]);
 
   if (expired) return <ExpiredDemo />;
-  return <div className="client-site">{renderTemplate(client)}</div>;
+  return <div className="client-site">{renderTemplateV2(client)}</div>;
 }
