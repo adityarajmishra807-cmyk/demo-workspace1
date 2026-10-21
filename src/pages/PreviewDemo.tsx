@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowLeft, ExternalLink, RefreshCw, Sparkles, WandSparkles } from 'lucide-react';
 import { fetchRemoteClient, getClientBySlug } from '@/data/clientRegistry';
 import type { ClientConfig } from '@/types/client';
@@ -14,7 +14,7 @@ export default function PreviewDemo({ slug, navigate }: { slug: string; navigate
   const [modifySuccess, setModifySuccess] = useState('');
   const publicUrl = `https://${slug}.demo.horizonworks.co.in/`;
 
-  const handleModify = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleModify = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!client || !instructions.trim() || modifying) return;
     setModifying(true);
