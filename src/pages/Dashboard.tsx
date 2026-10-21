@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getClientSummaries, getClientById, deleteClient, isProtectedClient, syncRemoteClients } from '@/data/clientRegistry';
 import { buildShareUrl } from '@/utils/demoUrl';
 import type { ClientConfig, TemplateId } from '@/types/client';
-import { LayoutDashboard, Plus, ExternalLink, ArrowLeft, Pencil, Trash2, X, Copy, Check, RefreshCw, Eye, Clock3 } from 'lucide-react';
+import { LayoutDashboard, Plus, ExternalLink, ArrowLeft, Pencil, Trash2, X, Copy, Check, RefreshCw, Eye, Clock3, WandSparkles } from 'lucide-react';
 
 const templateLabels: Record<TemplateId, string> = {
   luxury: 'Luxury', photography: 'Photography', 'local-service': 'Local Service', restaurant: 'Restaurant / Hospitality', professional: 'Professional Business',
@@ -177,6 +177,7 @@ function ActionButtons({
   if (mobile) {
     return <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
       <button onClick={onPreview} title="Preview inside Demo Engine" className={`${buttonClass} gap-2 px-3 py-2.5 bg-white/5 text-violet-400 text-xs font-medium`}><Eye size={16} /> Preview</button>
+      <button onClick={onPreview} title="Open AI website editor" className={`${buttonClass} gap-2 px-3 py-2.5 bg-violet-500/10 text-violet-300 text-xs font-medium`}><WandSparkles size={16} /> AI Modify</button>
       <button onClick={onShare} title="Copy share link" className={`${buttonClass} gap-2 px-3 py-2.5 bg-white/5 text-emerald-400 text-xs font-medium`}>{copied ? <Check size={16} /> : <Copy size={16} />} {copied ? 'Copied' : 'Copy Link'}</button>
       {client && <a href={publicUrl} target="_blank" rel="noopener noreferrer" title="Open public demo" aria-label="Open public demo" className={`${buttonClass} gap-2 px-3 py-2.5 bg-white/5 text-sky-400 text-xs font-medium`}><ExternalLink size={16} /> Open</a>}
       {!protectedClient && <button onClick={onEdit} title="Edit demo" className={`${buttonClass} gap-2 px-3 py-2.5 bg-white/5 text-white/70 text-xs font-medium`}><Pencil size={16} /> Edit</button>}
@@ -186,6 +187,7 @@ function ActionButtons({
 
   return <div className="flex items-center justify-end gap-0.5 whitespace-nowrap">
     <button onClick={onPreview} title="Preview inside Demo Engine" aria-label="Preview" className={`${buttonClass} h-9 w-9 text-violet-400`}><Eye size={16} /></button>
+    <button onClick={onPreview} title="Open AI website editor" aria-label="AI Modify" className={`${buttonClass} h-9 w-9 text-violet-300`}><WandSparkles size={16} /></button>
     <button onClick={onShare} title="Copy share link" aria-label="Copy share link" className={`${buttonClass} h-9 w-9 text-emerald-400`}>{copied ? <Check size={16} /> : <Copy size={16} />}</button>
     {client && <a href={publicUrl} target="_blank" rel="noopener noreferrer" title="Open public demo" aria-label="Open public demo" className={`${buttonClass} h-9 w-9 text-sky-400`}><ExternalLink size={16} /></a>}
     {!protectedClient && <button onClick={onEdit} title="Edit demo" aria-label="Edit demo" className={`${buttonClass} h-9 w-9 text-white/70`}><Pencil size={16} /></button>}
