@@ -111,8 +111,20 @@ async function fetchPexelsImages(query: string) {
   }
 }
 
-async function callGemini(apiKey: string, prompt: string) {
-  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent', {
+const GEMINI_MODELS = [
+  'gemini-3.1-flash-lite',
+  'gemini-3.8-flash',
+  'gemini-3.5-flash-lite',
+] as const;
+
+const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function callGeminiModel(apiKey: string, prompt: string, model: string) {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: JSON.stringify({
@@ -121,17 +133,47 @@ async function callGemini(apiKey: string, prompt: string) {
       generationConfig: { responseMimeType: 'application/json', responseSchema },
     }),
   });
+
   const responseText = await response.text();
   let payload: any = null;
   try { payload = JSON.parse(responseText); } catch { /* preserve raw text */ }
+
   if (!response.ok) {
     const detail = payload?.error?.message || responseText || 'The Gemini request failed.';
     const code = payload?.error?.status || response.statusText;
-    throw new Error(`Gemini ${code}: ${detail}`);
+    const error = new Error(`Gemini ${code} (${response.status}) on ${model}: ${detail}`);
+    Object.assign(error, { status: response.status, retryable: RETRYABLE_STATUS_CODES.has(response.status) });
+    throw error;
   }
+
   const text = payload?.candidates?.[0]?.content?.parts?.find((part: any) => typeof part?.text === 'string')?.text;
-  if (!text) throw new Error('Gemini returned no generated content.');
+  if (!text) throw new Error(`Gemini returned no generated content from ${model}.`);
   return JSON.parse(text);
+}
+
+async function callGemini(apiKey: string, prompt: string) {
+  const failures: string[] = [];
+
+  for (const [index, model] of GEMINI_MODELS.entries()) {
+    // Retry the primary model once for transient overload/rate-limit/server errors.
+    const attempts = index === 0 ? 2 : 1;
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      try {
+        return await callGeminiModel(apiKey, prompt, model);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        failures.push(message);
+        const retryable = Boolean(error && typeof error === 'object' && 'retryable' in error && (error as { retryable?: boolean }).retryable);
+
+        if (!retryable) throw error;
+        if (attempt + 1 < attempts) await wait(500 * (attempt + 1));
+        else break;
+      }
+    }
+    console.warn(`Gemini model ${model} failed; ${index + 1 < GEMINI_MODELS.length ? 'trying fallback model' : 'no fallback models remain'}.`);
+  }
+
+  throw new Error(`Gemini generation failed across all configured models. ${failures.join(' | ')}`);
 }
 
 export default async function handler(req: any, res: any) {
